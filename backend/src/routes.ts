@@ -9,13 +9,19 @@ import PizZip from 'pizzip';
 import Docxtemplater from 'docxtemplater';
 import libre from 'libreoffice-convert';
 import { promisify } from 'util';
+import { authenticateToken } from './middleware/auth.js';
 
 const router = Router();
 
 // Multer setup for DOCX uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, path.join(process.cwd(), 'uploads', 'templates'));
+    const uploadDir = path.join(process.cwd(), 'uploads', 'templates');
+    // Create directory if it doesn't exist
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
@@ -25,23 +31,24 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // POST /api/templates/upload
-router.post('/templates/upload', upload.single('template'), async (req: Request, res: Response) => {
+router.post('/templates/upload', authenticateToken, upload.single('template'), async (req: Request, res: Response) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
     }
     const { originalname, filename } = req.file;
-    const { template_name } = req.body; // Get template name from form
+    const { template_name, category, sub_category } = req.body; // Get form data
     
-    // Store relative path instead of absolute path
-    const relativePath = `uploads/templates/${filename}`;
-    
-    console.log('Storing relative path:', relativePath);
+    // Store only the filename in database
+    console.log('Storing filename:', filename);
+    console.log('Category:', category, 'Sub Category:', sub_category);
     
     const template = await DocumentTemplate.create({
       template_id: uuidv4(),
       template_name: template_name || originalname, // Use form name or fallback to filename
-      template_path: relativePath,
+      template_path: filename, // Store only filename
+      category: category || 'General', // Default category if not provided
+      sub_category: sub_category || 'Default', // Default sub category if not provided
     });
     res.status(201).json({ message: 'Template uploaded', template });
   } catch (error) {
@@ -50,13 +57,32 @@ router.post('/templates/upload', upload.single('template'), async (req: Request,
 });
 
 // GET /api/templates
-router.get('/templates', async (req: Request, res: Response) => {
+router.get('/templates', authenticateToken, async (req: Request, res: Response) => {
   try {
-    const templates = await DocumentTemplate.findAll();
-    console.log('All templates:', templates.map(t => ({
+    const { category, sub_category } = req.query;
+    
+    let whereClause: any = {};
+    
+    // Filter by category if provided
+    if (category) {
+      whereClause.category = category;
+    }
+    
+    // Filter by sub_category if provided
+    if (sub_category) {
+      whereClause.sub_category = sub_category;
+    }
+    
+    const templates = await DocumentTemplate.findAll({
+      where: whereClause,
+      order: [['template_name', 'ASC']]
+    });
+    
+    console.log('Filtered templates:', templates.map(t => ({
       id: t.template_id,
       name: t.template_name,
-      path: t.template_path
+      category: t.category,
+      sub_category: t.sub_category
     })));
     console.log('Total templates found:', templates.length);
     res.json(templates);
@@ -78,7 +104,8 @@ router.get('/templates/:id/download', async (req: Request, res: Response) => {
     
     // Access data from dataValues since direct property access returns undefined
     const templateData = template.dataValues || template;
-    const filePath = path.join(process.cwd(), templateData.template_path);
+    // Construct full path from stored filename
+    const filePath = path.join(process.cwd(), 'uploads', 'templates', templateData.template_path);
     const fileName = templateData.template_name.endsWith('.docx') 
       ? templateData.template_name 
       : `${templateData.template_name}.docx`;
@@ -107,8 +134,8 @@ router.delete('/templates/:id', async (req: Request, res: Response) => {
     // Access data from dataValues since direct property access returns undefined
     const templateData = template.dataValues || template;
     
-    // Construct the full file path
-    const filePath = path.join(process.cwd(), templateData.template_path);
+    // Construct the full file path from stored filename
+    const filePath = path.join(process.cwd(), 'uploads', 'templates', templateData.template_path);
     
     // Delete the physical file
     try {
@@ -156,15 +183,16 @@ router.get('/templates/:id/analyze', async (req: Request, res: Response) => {
     
     // Access data from dataValues since direct property access returns undefined
     const templateData = template.dataValues || template;
-    const templatePath = templateData.template_path;
+    const templateFilename = templateData.template_path;
     
    console.log('===================');
-    console.log('Template path:', templatePath);
-    if (!templatePath) {
-      return res.status(400).json({ error: 'Template path is missing' });
+    console.log('Template filename:', templateFilename);
+    if (!templateFilename) {
+      return res.status(400).json({ error: 'Template filename is missing' });
     }
     
-    const filePath = templatePath;
+    // Construct full path from stored filename
+    const filePath = path.join(process.cwd(), 'uploads', 'templates', templateFilename);
       console.log('filePath  :', filePath);
     
     if (!fs.existsSync(filePath)) {
@@ -203,7 +231,7 @@ router.get('/templates/:id/analyze', async (req: Request, res: Response) => {
 });
 
 // POST /api/documents/generate - Generate document from template
-router.post('/documents/generate', async (req: Request, res: Response) => {
+router.post('/documents/generate', authenticateToken, async (req: Request, res: Response) => {
   try {
     const { template_id, data, document_name, description, user_id, customer_name, customer_phone, total, paid } = req.body;
     console.log('template_id:', template_id);
@@ -220,17 +248,20 @@ router.post('/documents/generate', async (req: Request, res: Response) => {
     
     // Access data from dataValues since direct property access returns undefined
     const templateData = template.dataValues || template;
-    const templatePath = templateData.template_path;
+    const templateFilename = templateData.template_path;
     
     console.log('Template found for generation:', {
       id: templateData.template_id,
       name: templateData.template_name,
-      path: templatePath
+      filename: templateFilename
     });
     
-    if (!templatePath) {
-      return res.status(400).json({ error: 'Template path is missing' });
+    if (!templateFilename) {
+      return res.status(400).json({ error: 'Template filename is missing' });
     }
+    
+    // Construct full path from stored filename
+    const fullTemplatePath = path.join(process.cwd(), 'uploads', 'templates', templateFilename);
     
     // Step 1: Check if there's an active book, if not create one
     let activeBook;
@@ -259,8 +290,6 @@ router.post('/documents/generate', async (req: Request, res: Response) => {
     }
     
     console.log('Using book_no:', bookNo);
-    
-    const fullTemplatePath = templatePath;
     
     if (!fs.existsSync(fullTemplatePath)) {
       return res.status(404).json({ error: 'Template file not found' });
@@ -348,7 +377,7 @@ router.post('/documents/generate', async (req: Request, res: Response) => {
     const documentRecord = await Document.create({
       template_id: template_id,
       document_name: document_name || docxFileName,
-      document_link: docxPath,
+      document_link: docxFileName, // Store only filename, not full path
       description: description || `Generated from template: ${templateData.template_name}`,
       user_id: user_id || undefined,
       doc_serial: nextDocSerial,
@@ -429,11 +458,14 @@ router.put('/documents/:id/update', async (req: Request, res: Response) => {
     }
     
     const templateData = template.dataValues || template;
-    const templatePath = templateData.template_path;
+    const templateFilename = templateData.template_path;
     
-    if (!templatePath) {
-      return res.status(400).json({ error: 'Template path is missing' });
+    if (!templateFilename) {
+      return res.status(400).json({ error: 'Template filename is missing' });
     }
+    
+    // Construct full path from stored filename
+    const templatePath = path.join(process.cwd(), 'uploads', 'templates', templateFilename);
     
     if (!fs.existsSync(templatePath)) {
       return res.status(404).json({ error: 'Template file not found' });
@@ -472,12 +504,15 @@ router.put('/documents/:id/update', async (req: Request, res: Response) => {
       },
     });
     
-    // Get the existing file path
-    const existingFilePath = docData.document_link;
+    // Get the existing filename and construct full path
+    const existingFilename = docData.document_link;
     
-    if (!existingFilePath) {
-      return res.status(400).json({ error: 'Document file path is missing' });
+    if (!existingFilename) {
+      return res.status(400).json({ error: 'Document filename is missing' });
     }
+    
+    // Construct full path from stored filename
+    const existingFilePath = path.join(process.cwd(), 'documents', existingFilename);
     
     const documentsDir = path.join(process.cwd(), 'documents');
     

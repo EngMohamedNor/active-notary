@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Download, FileText, Loader2 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 interface Template {
   template_id: string;
   template_name: string;
   template_path: string;
+  category: string;
+  sub_category: string;
 }
 
 interface TemplateAnalysis {
@@ -26,7 +29,9 @@ interface DocumentMetadata {
 }
 
 const GenerateDocument: React.FC = () => {
+  const { token } = useAuth();
   const [templates, setTemplates] = useState<Template[]>([]);
+  const [filteredTemplates, setFilteredTemplates] = useState<Template[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
   const [templateAnalysis, setTemplateAnalysis] = useState<TemplateAnalysis | null>(null);
   const [loading, setLoading] = useState(false);
@@ -36,6 +41,12 @@ const GenerateDocument: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [generatedDocumentUrl, setGeneratedDocumentUrl] = useState<string | null>(null);
   const [generatedDocumentFilename, setGeneratedDocumentFilename] = useState<string>('');
+  
+  // Category and sub-category selection states
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [selectedSubCategory, setSelectedSubCategory] = useState<string>('');
+  const [availableCategories, setAvailableCategories] = useState<string[]>([]);
+  const [availableSubCategories, setAvailableSubCategories] = useState<string[]>([]);
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<FormData>();
   const { register: registerMetadata, handleSubmit: handleSubmitMetadata, reset: resetMetadata, formState: { errors: metadataErrors } } = useForm<DocumentMetadata>();
@@ -45,20 +56,77 @@ const GenerateDocument: React.FC = () => {
     fetchTemplates();
   }, []);
 
-  const fetchTemplates = async () => {
+  const fetchTemplates = async (category?: string, subCategory?: string) => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:3000/api/templates');
+      let url = 'http://localhost:3000/api/templates';
+      const params = new URLSearchParams();
+      
+      if (category) params.append('category', category);
+      if (subCategory) params.append('sub_category', subCategory);
+      
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
+      
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
       if (!response.ok) {
         throw new Error('Failed to fetch templates');
       }
       const data = await response.json();
-      setTemplates(data);
+      
+      if (!category && !subCategory) {
+        // Initial load - get all templates and extract categories
+        setTemplates(data);
+        const categories = [...new Set(data.map((t: Template) => t.category))].sort();
+        setAvailableCategories(categories);
+      } else {
+        // Filtered load
+        setFilteredTemplates(data);
+      }
     } catch (error) {
       console.error('Error fetching templates:', error);
       setError('Failed to load templates');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCategoryChange = (category: string) => {
+    setSelectedCategory(category);
+    setSelectedSubCategory('');
+    setSelectedTemplate(null);
+    setTemplateAnalysis(null);
+    setFilteredTemplates([]);
+    setAvailableSubCategories([]);
+    
+    if (category) {
+      // Get sub-categories for the selected category
+      const subCategories = [...new Set(
+        templates
+          .filter(t => t.category === category)
+          .map(t => t.sub_category)
+      )].sort();
+      setAvailableSubCategories(subCategories);
+    }
+  };
+
+  const handleSubCategoryChange = (subCategory: string) => {
+    setSelectedSubCategory(subCategory);
+    setSelectedTemplate(null);
+    setTemplateAnalysis(null);
+    
+    if (subCategory && selectedCategory) {
+      // Filter templates by both category and sub-category
+      const filtered = templates.filter(
+        t => t.category === selectedCategory && t.sub_category === subCategory
+      );
+      setFilteredTemplates(filtered);
     }
   };
 
@@ -68,7 +136,12 @@ const GenerateDocument: React.FC = () => {
       setError(null);
       setSelectedTemplate(template);
       
-      const response = await fetch(`http://localhost:3000/api/templates/${template.template_id}/analyze`);
+      const response = await fetch(`http://localhost:3000/api/templates/${template.template_id}/analyze`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
       if (!response.ok) {
         throw new Error('Failed to analyze template');
       }
@@ -99,6 +172,7 @@ const GenerateDocument: React.FC = () => {
       const response = await fetch('http://localhost:3000/api/documents/generate', {
         method: 'POST',
         headers: {
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -171,6 +245,10 @@ const GenerateDocument: React.FC = () => {
   const resetForm = () => {
     setSelectedTemplate(null);
     setTemplateAnalysis(null);
+    setSelectedCategory('');
+    setSelectedSubCategory('');
+    setFilteredTemplates([]);
+    setAvailableSubCategories([]);
     reset();
     resetMetadata();
     setError(null);
@@ -302,30 +380,92 @@ const GenerateDocument: React.FC = () => {
                 </p>
               </div>
             ) : (
-              <div className="space-y-3">
-                {templates.map((template) => (
-                  <button
-                    key={template.template_id}
-                    onClick={() => handleTemplateSelect(template)}
-                    className={`w-full p-4 text-left rounded-lg border transition-colors ${
-                      selectedTemplate?.template_id === template.template_id
-                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
-                    }`}
-                  >
-                    <div className="flex items-center">
-                      <FileText className="h-5 w-5 text-gray-500 mr-3" />
-                      <div>
-                        <p className="font-medium text-gray-900 dark:text-white">
-                          {template.template_name}
-                        </p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          Template ID: {template.template_id}
+              <div className="space-y-6">
+                {/* Category and Sub-Category Selection */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Category Dropdown */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Category *
+                    </label>
+                    <select
+                      value={selectedCategory}
+                      onChange={(e) => handleCategoryChange(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    >
+                      <option value="">Select a category</option>
+                      {availableCategories.map((category) => (
+                        <option key={category} value={category}>
+                          {category}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Sub-Category Dropdown */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Sub-Category *
+                    </label>
+                    <select
+                      value={selectedSubCategory}
+                      onChange={(e) => handleSubCategoryChange(e.target.value)}
+                      disabled={!selectedCategory}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <option value="">Select a sub-category</option>
+                      {availableSubCategories.map((subCategory) => (
+                        <option key={subCategory} value={subCategory}>
+                          {subCategory}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Template Selection */}
+                {selectedCategory && selectedSubCategory && (
+                  <div>
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+                      Available Templates
+                    </h3>
+                    {filteredTemplates.length === 0 ? (
+                      <div className="text-center py-8">
+                        <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                        <p className="text-gray-600 dark:text-gray-400">No templates found</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">
+                          No templates available for the selected category and sub-category
                         </p>
                       </div>
-                    </div>
-                  </button>
-                ))}
+                    ) : (
+                      <div className="space-y-3">
+                        {filteredTemplates.map((template) => (
+                          <button
+                            key={template.template_id}
+                            onClick={() => handleTemplateSelect(template)}
+                            className={`w-full p-4 text-left rounded-lg border transition-colors ${
+                              selectedTemplate?.template_id === template.template_id
+                                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                                : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                            }`}
+                          >
+                            <div className="flex items-center">
+                              <FileText className="h-5 w-5 text-gray-500 mr-3" />
+                              <div>
+                                <p className="font-medium text-gray-900 dark:text-white">
+                                  {template.template_name}
+                                </p>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">
+                                  {template.category} • {template.sub_category}
+                                </p>
+                              </div>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 

@@ -3,7 +3,9 @@
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import path from 'path';
+import fs from 'fs';
 import routes from './routes.js';
+import authRoutes from './routes/auth.js';
 import sequelize from './models/index.js';
 
 const app = express();
@@ -19,9 +21,33 @@ app.use(cors({
 // Parse JSON bodies
 app.use(express.json());
 
+// Create necessary directories if they don't exist
+const uploadsDir = path.join(process.cwd(), 'uploads');
+const templatesDir = path.join(uploadsDir, 'templates');
+const documentsDir = path.join(process.cwd(), 'documents');
+
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+  console.log('Created uploads directory');
+}
+
+if (!fs.existsSync(templatesDir)) {
+  fs.mkdirSync(templatesDir, { recursive: true });
+  console.log('Created templates directory');
+}
+
+if (!fs.existsSync(documentsDir)) {
+  fs.mkdirSync(documentsDir, { recursive: true });
+  console.log('Created documents directory');
+}
+
 // Serve static files from uploads directory
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
+// Authentication routes
+app.use('/api/auth', authRoutes);
+
+// Protected API routes
 app.use('/api', routes);
 
 app.get('/', (req: Request, res: Response) => {

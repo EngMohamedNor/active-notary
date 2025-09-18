@@ -6,12 +6,42 @@ interface UploadFormInputs {
   template_name: string;
   template: FileList;
   description?: string;
+  category: string;
+  sub_category: string;
 }
 
 const UploadTemplate: React.FC = () => {
   const { register, handleSubmit, reset, formState: { errors } } = useForm<UploadFormInputs>();
   const [status, setStatus] = useState<{ type: 'success' | 'error' | null; message: string }>({ type: null, message: '' });
   const [isUploading, setIsUploading] = useState(false);
+
+  // Static category options - you can manually update these
+  const categoryOptions = [
+    'Legal Documents',
+    'Business Documents',
+    'Personal Documents',
+    'Educational Documents',
+    'Medical Documents',
+    'Financial Documents',
+    'Government Forms',
+    'Other'
+  ];
+
+  // Static sub-category options - you can manually update these
+  const subCategoryOptions = [
+    'Contracts',
+    'Agreements',
+    'Certificates',
+    'Reports',
+    'Applications',
+    'Declarations',
+    'Letters',
+    'Forms',
+    'Invoices',
+    'Receipts',
+    'Statements',
+    'Other'
+  ];
 
   const onSubmit = async (data: UploadFormInputs) => {
     if (!data.template || data.template.length === 0) {
@@ -25,6 +55,8 @@ const UploadTemplate: React.FC = () => {
     const formData = new FormData();
     formData.append('template_name', data.template_name);
     formData.append('template', data.template[0]);
+    formData.append('category', data.category);
+    formData.append('sub_category', data.sub_category);
     if (data.description) {
       formData.append('description', data.description);
     }
@@ -76,6 +108,53 @@ const UploadTemplate: React.FC = () => {
               {errors.template_name && (
                 <p className="mt-1 text-sm text-red-600">{errors.template_name.message}</p>
               )}
+            </div>
+
+            {/* Category and Sub-Category */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Category */}
+              <div>
+                <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2">
+                  Category *
+                </label>
+                <select
+                  id="category"
+                  {...register('category', { required: 'Category is required' })}
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                >
+                  <option value="">Select a category</option>
+                  {categoryOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+                {errors.category && (
+                  <p className="mt-1 text-sm text-red-600">{errors.category.message}</p>
+                )}
+              </div>
+
+              {/* Sub-Category */}
+              <div>
+                <label htmlFor="sub_category" className="block text-sm font-medium text-gray-700 mb-2">
+                  Sub-Category *
+                </label>
+                <select
+                  id="sub_category"
+                  {...register('sub_category', { required: 'Sub-category is required' })}
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                >
+                  <option value="">Select a sub-category</option>
+                  {subCategoryOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+                {errors.sub_category && (
+                  <p className="mt-1 text-sm text-red-600">{errors.sub_category.message}</p>
+                )}
+              </div>
             </div>
 
             {/* Description */}

@@ -5,6 +5,8 @@ interface DocumentTemplateAttributes {
   template_id: string;
   template_name: string;
   template_path: string;
+  category: string;
+  sub_category: string;
   created_at?: Date;
 }
 
@@ -15,6 +17,8 @@ class DocumentTemplate extends Model<DocumentTemplateAttributes, DocumentTemplat
   public template_id!: string;
   public template_name!: string;
   public template_path!: string;
+  public category!: string;
+  public sub_category!: string;
   public created_at!: Date;
 }
 
@@ -32,6 +36,14 @@ export const initDocumentTemplate = (sequelize: Sequelize) => {
         allowNull: false,
       },
       template_path: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      category: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      sub_category: {
         type: DataTypes.STRING,
         allowNull: false,
       },
