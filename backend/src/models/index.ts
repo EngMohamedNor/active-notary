@@ -3,13 +3,14 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const sequelize = new Sequelize(
-  "active_notray",
-  "root",
-  "12345678",
+  process.env.DB_NAME || "",
+  process.env.DB_USER || "",
+  process.env.DB_PASSWORD || "",
   {
-    host: "127.0.0.1",
-    dialect: 'mysql',
-    logging: false,
+    host: process.env.DB_HOST || "127.0.0.1",
+    port: parseInt(process.env.DB_PORT || "3306"),
+    dialect: (process.env.DB_DIALECT as any) || 'mysql',
+    logging: process.env.NODE_ENV === 'development' ? console.log : false,
   }
 );
 
