@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Download, Calendar, Search, FileText, Filter, Edit } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { apiUtils } from '../utils/api';
 
 interface Document {
   id: number;
@@ -16,6 +18,7 @@ interface Document {
   balance?: number;
   customer_name?: string;
   customer_phone?: string;
+  field_values?: Record<string, string>;
   created_at: string;
   updated_at: string;
   DocumentTemplate?: {
@@ -47,15 +50,23 @@ const DocumentsList: React.FC = () => {
     placeholderData: {}
   });
   const [editing, setEditing] = useState(false);
+  const { token } = useAuth();
 
   // Fetch documents from database
   const fetchDocuments = async () => {
+    if (!token) {
+      setError('Authentication required');
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:3000/api/documents/db');
+      const response = await apiUtils.get('/documents/db', token);
       
       if (!response.ok) {
-        throw new Error('Failed to fetch documents');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to fetch documents');
       }
       
       const data = await response.json();
@@ -71,7 +82,7 @@ const DocumentsList: React.FC = () => {
 
   useEffect(() => {
     fetchDocuments();
-  }, []);
+  }, [token]);
 
   // Filter documents based on search term and date range
   useEffect(() => {
@@ -104,6 +115,11 @@ const DocumentsList: React.FC = () => {
   }, [documents, searchTerm, dateFilter]);
 
   const handleDownload = async (doc: Document) => {
+    if (!token) {
+      setError('Authentication required');
+      return;
+    }
+
     try {
       // Extract filename from document_link or use document_name
       // The document_name should contain the serial number filename
@@ -116,10 +132,11 @@ const DocumentsList: React.FC = () => {
         filename 
       });
       
-      const response = await fetch(`http://localhost:3000/api/documents/${filename}/download`);
+      const response = await apiUtils.get(`/documents/${filename}/download`, token);
       
       if (!response.ok) {
-        throw new Error('Failed to download document');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to download document');
       }
 
       const blob = await response.blob();
@@ -143,26 +160,33 @@ const DocumentsList: React.FC = () => {
   };
 
   const handleEditDocument = async (doc: Document) => {
+    if (!token) {
+      setError('Authentication required');
+      return;
+    }
+
     try {
       setEditing(true);
       
       // Fetch the template to get placeholders
       console.log('Fetching template analysis for template_id:', doc.DocumentTemplate?.template_id);
-      const response = await fetch(`http://localhost:3000/api/templates/${doc.DocumentTemplate?.template_id}/analyze`);
+      const response = await apiUtils.get(`/templates/${doc.DocumentTemplate?.template_id}/analyze`, token);
       
       if (!response.ok) {
         if (response.status === 404) {
           throw new Error('Template not found. The template used for this document may have been deleted.');
         }
-        throw new Error('Failed to fetch template analysis');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to fetch template analysis');
       }
       
       const analysis = await response.json();
       
-      // Initialize placeholder data with current values (if any)
+      // Initialize placeholder data with stored field values or empty strings
       const placeholderData: Record<string, string> = {};
       analysis.placeholders.forEach((placeholder: string) => {
-        placeholderData[placeholder] = '';
+        // Use stored field value if available, otherwise use empty string
+        placeholderData[placeholder] = doc.field_values?.[placeholder] || '';
       });
       
       setEditModal({
@@ -180,20 +204,19 @@ const DocumentsList: React.FC = () => {
   };
 
   const handleUpdateDocument = async () => {
+    if (!token) {
+      setError('Authentication required');
+      return;
+    }
+
     try {
       setEditing(true);
       
       if (!editModal.document) return;
       
-      const response = await fetch(`http://localhost:3000/api/documents/${editModal.document.id}/update`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          data: editModal.placeholderData,
-        }),
-      });
+      const response = await apiUtils.put(`/documents/${editModal.document.id}/update`, {
+        data: editModal.placeholderData,
+      }, token);
       
       if (!response.ok) {
         const errorData = await response.json();
@@ -398,7 +421,7 @@ const DocumentsList: React.FC = () => {
                           {document.serial_number}
                         </div>
                         <div className="text-xs text-gray-400 dark:text-gray-500">
-                          {document.DocumentTemplate?.template_id || 'Unknown Template'}
+                          {document.DocumentTemplate?.template_name || 'Unknown Template'}
                         </div>
                       </div>
                     </td>
@@ -500,7 +523,12 @@ const DocumentsList: React.FC = () => {
                   Edit Placeholder Values
                 </h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Modify the placeholder values below. The existing document will be updated with these values.
+                  Modify the placeholder values below. The existing document will be updated with these values. 
+                  {editModal.document?.field_values && (
+                    <span className="block mt-1 text-blue-600 dark:text-blue-400">
+                      ✓ Values are pre-filled from the original document
+                    </span>
+                  )}
                 </p>
 
                 {editModal.placeholders.map((placeholder) => (
@@ -508,20 +536,53 @@ const DocumentsList: React.FC = () => {
                     <div key={placeholder}>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         {placeholder.charAt(0).toUpperCase() + placeholder.slice(1).replace(/_/g, ' ')}
+                        {placeholder.toLowerCase().includes('taariikh') && (
+                          <span className="ml-2 text-xs text-blue-600 dark:text-blue-400">
+                            (date)
+                          </span>
+                        )}
+                        {editModal.document?.field_values?.[placeholder] && (
+                          <span className="ml-2 text-xs text-green-600 dark:text-green-400">
+                            (pre-filled)
+                          </span>
+                        )}
                       </label>
-                      <input
-                        type="text"
-                        value={editModal.placeholderData[placeholder] || ''}
-                        onChange={(e) => setEditModal(prev => ({
-                          ...prev,
-                          placeholderData: {
-                            ...prev.placeholderData,
-                            [placeholder]: e.target.value
-                          }
-                        }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                        placeholder={`Enter ${placeholder.replace(/_/g, ' ')}`}
-                      />
+                      {placeholder.toLowerCase().includes('taariikh') ? (
+                        <input
+                          type="date"
+                          value={editModal.placeholderData[placeholder] || ''}
+                          onChange={(e) => setEditModal(prev => ({
+                            ...prev,
+                            placeholderData: {
+                              ...prev.placeholderData,
+                              [placeholder]: e.target.value
+                            }
+                          }))}
+                          className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white ${
+                            editModal.document?.field_values?.[placeholder] 
+                              ? 'border-green-300 bg-green-50 dark:border-green-600 dark:bg-green-900/20' 
+                              : 'border-gray-300 dark:border-gray-600'
+                          }`}
+                        />
+                      ) : (
+                        <input
+                          type="text"
+                          value={editModal.placeholderData[placeholder] || ''}
+                          onChange={(e) => setEditModal(prev => ({
+                            ...prev,
+                            placeholderData: {
+                              ...prev.placeholderData,
+                              [placeholder]: e.target.value
+                            }
+                          }))}
+                          className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white ${
+                            editModal.document?.field_values?.[placeholder] 
+                              ? 'border-green-300 bg-green-50 dark:border-green-600 dark:bg-green-900/20' 
+                              : 'border-gray-300 dark:border-gray-600'
+                          }`}
+                          placeholder={`Enter ${placeholder.replace(/_/g, ' ')}`}
+                        />
+                      )}
                     </div>
                   )
                 ))}

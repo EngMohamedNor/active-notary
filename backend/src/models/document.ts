@@ -15,6 +15,7 @@ interface DocumentAttributes {
   balance?: number;
   customer_name?: string;
   customer_phone?: string;
+  field_values?: object;
   created_at?: Date;
   updated_at?: Date;
 }
@@ -37,6 +38,7 @@ class Document extends Model<DocumentAttributes, DocumentCreationAttributes>
   public balance?: number;
   public customer_name?: string;
   public customer_phone?: string;
+  public field_values?: object;
   public created_at!: Date;
   public updated_at!: Date;
 }
@@ -100,6 +102,10 @@ export const initDocument = (sequelize: Sequelize) => {
       },
       customer_phone: {
         type: DataTypes.STRING(50),
+        allowNull: true,
+      },
+      field_values: {
+        type: DataTypes.JSON,
         allowNull: true,
       },
       created_at: {

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Upload, FileText, CheckCircle, AlertCircle } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { apiUtils } from '../utils/api';
 
 interface UploadFormInputs {
   template_name: string;
@@ -14,38 +16,35 @@ const UploadTemplate: React.FC = () => {
   const { register, handleSubmit, reset, formState: { errors } } = useForm<UploadFormInputs>();
   const [status, setStatus] = useState<{ type: 'success' | 'error' | null; message: string }>({ type: null, message: '' });
   const [isUploading, setIsUploading] = useState(false);
+  const { token } = useAuth();
 
   // Static category options - you can manually update these
   const categoryOptions = [
-    'Legal Documents',
-    'Business Documents',
-    'Personal Documents',
-    'Educational Documents',
-    'Medical Documents',
-    'Financial Documents',
-    'Government Forms',
-    'Other'
+    'BAABUUR',
+    'DHUL',
+    'TRANSLATIONS',
+    'WAKAALA',
+    
   ];
 
   // Static sub-category options - you can manually update these
   const subCategoryOptions = [
-    'Contracts',
-    'Agreements',
-    'Certificates',
-    'Reports',
-    'Applications',
-    'Declarations',
-    'Letters',
-    'Forms',
-    'Invoices',
-    'Receipts',
-    'Statements',
-    'Other'
+    'HIBO',
+    'IIB',
+    'WAREEJIN',
+    'WAKAALA',
+    'TRANSLATIONS',
+ 
   ];
 
   const onSubmit = async (data: UploadFormInputs) => {
     if (!data.template || data.template.length === 0) {
       setStatus({ type: 'error', message: 'Please select a DOCX file.' });
+      return;
+    }
+
+    if (!token) {
+      setStatus({ type: 'error', message: 'Authentication required. Please log in.' });
       return;
     }
 
@@ -62,10 +61,7 @@ const UploadTemplate: React.FC = () => {
     }
 
     try {
-      const res = await fetch('http://localhost:3000/api/templates/upload', {
-        method: 'POST',
-        body: formData,
-      });
+      const res = await apiUtils.upload('/templates/upload', formData, token);
       
       if (res.ok) {
         setStatus({ type: 'success', message: 'Template uploaded successfully!' });

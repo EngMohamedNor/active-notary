@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router';
 import { useAuth } from '../context/AuthContext';
 import { Eye, EyeOff, LogIn, UserPlus } from 'lucide-react';
+import longLogo from "../assets/long-logo.png";
 
 interface LoginFormData {
   username: string;
@@ -65,23 +66,16 @@ const Login: React.FC = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
-          <div className="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900">
-            <LogIn className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+         
+          <div className="  flex items-center justify-center ">
+             <img src={longLogo} alt="Logo" className="h-12 w-auto" />
           </div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white">
             {isLogin ? 'Sign in to your account' : 'Create your account'}
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
-            {isLogin ? "Don't have an account? " : "Already have an account? "}
-            <button
-              onClick={() => {
-                setIsLogin(!isLogin);
-                setError(null);
-              }}
-              className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"
-            >
-              {isLogin ? 'Sign up' : 'Sign in'}
-            </button>
+         
+            
           </p>
         </div>
 

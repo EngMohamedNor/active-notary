@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Download, FileText, Loader2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { apiUtils } from '../utils/api';
 
 interface Template {
   template_id: string;
@@ -57,26 +58,28 @@ const GenerateDocument: React.FC = () => {
   }, []);
 
   const fetchTemplates = async (category?: string, subCategory?: string) => {
+    if (!token) {
+      setError('Authentication required');
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
-      let url = 'http://localhost:3000/api/templates';
+      let endpoint = '/templates';
       const params = new URLSearchParams();
       
       if (category) params.append('category', category);
       if (subCategory) params.append('sub_category', subCategory);
       
       if (params.toString()) {
-        url += `?${params.toString()}`;
+        endpoint += `?${params.toString()}`;
       }
       
-      const response = await fetch(url, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await apiUtils.get(endpoint, token);
       if (!response.ok) {
-        throw new Error('Failed to fetch templates');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to fetch templates');
       }
       const data = await response.json();
       
@@ -131,19 +134,20 @@ const GenerateDocument: React.FC = () => {
   };
 
   const handleTemplateSelect = async (template: Template) => {
+    if (!token) {
+      setError('Authentication required');
+      return;
+    }
+
     try {
       setAnalyzing(true);
       setError(null);
       setSelectedTemplate(template);
       
-      const response = await fetch(`http://localhost:3000/api/templates/${template.template_id}/analyze`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await apiUtils.get(`/templates/${template.template_id}/analyze`, token);
       if (!response.ok) {
-        throw new Error('Failed to analyze template');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to analyze template');
       }
       
       const analysis = await response.json();
@@ -165,25 +169,23 @@ const GenerateDocument: React.FC = () => {
       return;
     }
 
+    if (!token) {
+      setError('Authentication required');
+      return;
+    }
+
     try {
       setGenerating(true);
       setError(null);
 
-      const response = await fetch('http://localhost:3000/api/documents/generate', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          template_id: selectedTemplate.template_id,
-          data: data,
-          description: metadata.description,
-          customer_name: metadata.customer_name,
-          customer_phone: metadata.customer_phone,
-          total: metadata.total,
-        }),
-      });
+      const response = await apiUtils.post('/documents/generate', {
+        template_id: selectedTemplate.template_id,
+        data: data,
+        description: metadata.description,
+        customer_name: metadata.customer_name,
+        customer_phone: metadata.customer_phone,
+        total: metadata.total,
+      }, token);
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -294,7 +296,7 @@ const GenerateDocument: React.FC = () => {
     <div className="mx-auto max-w-4xl p-6">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-          Generate Document
+          Generate New Notary Document
         </h1>
         <p className="text-gray-600 dark:text-gray-400">
           Follow the steps to generate your document.
@@ -318,7 +320,7 @@ const GenerateDocument: React.FC = () => {
               }`}>
                 1
               </div>
-              <span className="ml-2 text-sm font-medium">Template Selection</span>
+              <span className="ml-2 text-sm font-medium">Document Type Selection</span>
             </div>
             
             <div className={`w-12 h-0.5 ${currentStep >= 2 ? 'bg-blue-600' : 'bg-gray-300'}`}></div>
@@ -342,7 +344,7 @@ const GenerateDocument: React.FC = () => {
               }`}>
                 3
               </div>
-              <span className="ml-2 text-sm font-medium">Template Fields</span>
+              <span className="ml-2 text-sm font-medium">Document Fields</span>
             </div>
             
             <div className={`w-12 h-0.5 ${currentStep >= 4 ? 'bg-blue-600' : 'bg-gray-300'}`}></div>
@@ -363,7 +365,7 @@ const GenerateDocument: React.FC = () => {
         {currentStep === 1 && (
           <div>
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
-              Step 1: Select Template
+              Step 1: Select Document Type
             </h2>
             
             {loading ? (
@@ -427,7 +429,7 @@ const GenerateDocument: React.FC = () => {
                 {selectedCategory && selectedSubCategory && (
                   <div>
                     <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                      Available Templates
+                      Available Document Types
                     </h3>
                     {filteredTemplates.length === 0 ? (
                       <div className="text-center py-8">
@@ -479,7 +481,7 @@ const GenerateDocument: React.FC = () => {
               </div>
             )}
 
-            {templateAnalysis && (
+            {/* {templateAnalysis && (
               <div className="mt-6 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
                   Template Analysis
@@ -510,7 +512,7 @@ const GenerateDocument: React.FC = () => {
                   )}
                 </div>
               </div>
-            )}
+            )} */}
 
             <div className="flex justify-end mt-6">
               <button
@@ -615,7 +617,7 @@ const GenerateDocument: React.FC = () => {
                   type="submit"
                   className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                 >
-                  Next: Template Fields
+                  Next: Fill Document Fields
                 </button>
               </div>
             </form>
@@ -625,26 +627,47 @@ const GenerateDocument: React.FC = () => {
         {/* Step 3: Template Fields */}
         {currentStep === 3 && (
           <div>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
-              Step 3: Fill Template Fields
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+              Step 3: Fill Document Fields
             </h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+              Fill in all the required fields below. Fields are organized in a 3-column layout for better readability.
+              {templateAnalysis?.placeholders && (
+                <span className="block mt-1 text-blue-600 dark:text-blue-400">
+                  {templateAnalysis.placeholders.filter(p => p !== 'serial_number').length} field(s) required
+                </span>
+              )}
+            </p>
             
             <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
-              <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {templateAnalysis?.placeholders.map((placeholder) => (
                   placeholder !== 'serial_number' && (
-                    <div key={placeholder}>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <div key={placeholder} className="space-y-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                         {placeholder.charAt(0).toUpperCase() + placeholder.slice(1).replace(/_/g, ' ')}
+                        {placeholder.toLowerCase().includes('taariikh') && (
+                          <span className="ml-2 text-xs text-blue-600 dark:text-blue-400">
+                            (date)
+                          </span>
+                        )}
                       </label>
-                      <input
-                        type="text"
-                        {...register(placeholder, { required: `${placeholder} is required` })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                        placeholder={`Enter ${placeholder.replace(/_/g, ' ')}`}
-                      />
+                      {placeholder.toLowerCase().includes('taariikh') ? (
+                        <input
+                          type="date"
+                          {...register(placeholder, { required: `${placeholder} is required` })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                        />
+                      ) : (
+                        <input
+                          type="text"
+                          {...register(placeholder, { required: `${placeholder} is required` })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                          placeholder={`Enter ${placeholder.replace(/_/g, ' ')}`}
+                        />
+                      )}
                       {errors[placeholder] && (
-                        <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                        <p className="text-sm text-red-600 dark:text-red-400">
                           {errors[placeholder]?.message}
                         </p>
                       )}

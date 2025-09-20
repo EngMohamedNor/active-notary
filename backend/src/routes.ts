@@ -31,7 +31,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // POST /api/templates/upload
-router.post('/templates/upload', authenticateToken, upload.single('template'), async (req: Request, res: Response) => {
+router.post('/templates/upload', upload.single('template'), async (req: Request, res: Response) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
@@ -388,6 +388,7 @@ router.post('/documents/generate', authenticateToken, async (req: Request, res: 
       balance: total && paid ? parseFloat(total) - parseFloat(paid) : undefined,
       customer_name: customer_name || undefined,
       customer_phone: customer_phone || undefined,
+      field_values: data, // Store the field values as JSON
     });
     
     console.log('Document record created with ID:', documentRecord.id);
@@ -415,7 +416,7 @@ router.post('/documents/generate', authenticateToken, async (req: Request, res: 
 });
 
 // PUT /api/documents/:id/update - Update existing document with new placeholder data
-router.put('/documents/:id/update', async (req: Request, res: Response) => {
+router.put('/documents/:id/update', authenticateToken, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { data } = req.body;
@@ -531,8 +532,9 @@ router.put('/documents/:id/update', async (req: Request, res: Response) => {
     fs.writeFileSync(existingFilePath, buf);
     console.log('Updated file saved to:', existingFilePath);
     
-    // Update the document record in database (update timestamp)
+    // Update the document record in database (update timestamp and field_values)
     await existingDocument.update({
+      field_values: data, // Store the updated field values as JSON
       updated_at: new Date()
     });
     
@@ -654,7 +656,7 @@ router.post('/books', async (req: Request, res: Response) => {
 });
 
 // GET /api/documents/db - List all documents from database
-router.get('/documents/db', async (req: Request, res: Response) => {
+router.get('/documents/db', authenticateToken, async (req: Request, res: Response) => {
   try {
     const documents = await Document.findAll({
       include: [
@@ -684,7 +686,7 @@ router.get('/documents/db', async (req: Request, res: Response) => {
 });
 
 // GET /api/documents/db/:id - Get specific document from database
-router.get('/documents/db/:id', async (req: Request, res: Response) => {
+router.get('/documents/db/:id', authenticateToken, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const document = await Document.findByPk(id, {

@@ -19,6 +19,8 @@ import { FileText, FolderOpen } from "lucide-react";
 import { useSidebar } from "../context/SidebarContext";
 import SidebarWidget from "./SidebarWidget";
 import logoImage from "../assets/logo.png";
+import longLogo from "../assets/long-logo.png";
+
 
 type NavItem = {
   name: string;
@@ -265,7 +267,7 @@ const AppSidebar: React.FC = () => {
       >
         <Link to="/">
           <img
-            src={logoImage}
+            src={longLogo}
             alt="Logo"
             className={isExpanded || isHovered || isMobileOpen ? "h-14 w-auto" : "h-12 w-12"}
           />

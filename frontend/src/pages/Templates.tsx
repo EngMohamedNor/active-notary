@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Plus, FileText, Download, Edit, Trash2 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { apiUtils } from '../utils/api';
 
 interface Template {
   template_id: string;
@@ -13,14 +15,22 @@ const Templates: React.FC = () => {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { token } = useAuth();
 
   // Fetch templates from the database
   useEffect(() => {
     const fetchTemplates = async () => {
+      if (!token) {
+        setError('Authentication required');
+        setLoading(false);
+        return;
+      }
+
       try {
-        const response = await fetch('http://localhost:3000/api/templates');
+        const response = await apiUtils.get('/templates', token);
         if (!response.ok) {
-          throw new Error('Failed to fetch templates');
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to fetch templates');
         }
         const data = await response.json();
         setTemplates(data);
@@ -32,7 +42,7 @@ const Templates: React.FC = () => {
     };
 
     fetchTemplates();
-  }, []);
+  }, [token]);
 
   // Format date for display
   const formatDate = (dateString: string) => {
@@ -73,10 +83,13 @@ const Templates: React.FC = () => {
       return;
     }
 
+    if (!token) {
+      alert('Authentication required');
+      return;
+    }
+
     try {
-      const response = await fetch(`http://localhost:3000/api/templates/${templateId}`, {
-        method: 'DELETE',
-      });
+      const response = await apiUtils.delete(`/templates/${templateId}`, token);
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -203,27 +216,57 @@ const Templates: React.FC = () => {
                 </div>
                 
                 <div className="flex space-x-2">
-                  <button 
+                  {/* <button 
                     onClick={() => {
-                      // Use the download API endpoint
+                      // Use the download API endpoint with authentication
                       const downloadUrl = `http://localhost:3000/api/templates/${template.template_id}/download`;
                       console.log('Download URL:', downloadUrl);
-                      window.open(downloadUrl, '_blank');
+                      
+                      // Create a temporary link with authorization header
+                      if (token) {
+                        fetch(downloadUrl, {
+                          headers: {
+                            'Authorization': `Bearer ${token}`
+                          }
+                        })
+                        .then(response => {
+                          if (response.ok) {
+                            return response.blob();
+                          }
+                          throw new Error('Download failed');
+                        })
+                        .then(blob => {
+                          const url = window.URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = template.template_name;
+                          document.body.appendChild(a);
+                          a.click();
+                          window.URL.revokeObjectURL(url);
+                          document.body.removeChild(a);
+                        })
+                        .catch(error => {
+                          console.error('Download error:', error);
+                          alert('Failed to download template');
+                        });
+                      } else {
+                        alert('Authentication required');
+                      }
                     }}
                     className="flex-1 inline-flex items-center justify-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                   >
                     <Download className="w-4 h-4 mr-1" />
                     Download
-                  </button>
+                  </button> */}
                   <button className="inline-flex items-center justify-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                     <Edit className="w-4 h-4" />
                   </button>
-                   <button 
+                   {/* <button 
                      onClick={() => deleteTemplate(template.template_id, template.template_name)}
                      className="inline-flex items-center justify-center px-3 py-2 border border-red-300 shadow-sm text-sm leading-4 font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                    >
                      <Trash2 className="w-4 h-4" />
-                   </button>
+                   </button> */}
                 </div>
               </div>
             </div>
