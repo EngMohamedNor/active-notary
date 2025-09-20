@@ -51,7 +51,11 @@ app.use('/api/auth', authRoutes);
 app.use('/api', routes);
 
 // Serve static files from frontend dist directory
-const frontendDistPath = path.join(process.cwd(), '..', 'frontend', 'dist');
+const frontendDistPath = path.join(process.cwd(), '..', '..', 'frontend', 'dist');
+
+console.log('Current working directory:', process.cwd());
+console.log('Frontend dist path:', frontendDistPath);
+console.log('Frontend dist exists:', fs.existsSync(frontendDistPath));
 
 // Check if frontend dist directory exists
 if (fs.existsSync(frontendDistPath)) {
