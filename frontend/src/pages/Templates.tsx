@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, FileText, Download, Edit, Trash2 } from 'lucide-react';
+import { Search, Plus, FileText, Edit } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { apiUtils } from '../utils/api';
 
@@ -77,37 +77,6 @@ const Templates: React.FC = () => {
     template.template_name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Delete template function
-  const deleteTemplate = async (templateId: string, templateName: string) => {
-    if (!confirm(`Are you sure you want to delete "${templateName}"? This action cannot be undone.`)) {
-      return;
-    }
-
-    if (!token) {
-      alert('Authentication required');
-      return;
-    }
-
-    try {
-      const response = await apiUtils.delete(`/templates/${templateId}`, token);
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to delete template');
-      }
-
-      // Remove the template from the local state
-      setTemplates(prevTemplates => 
-        prevTemplates.filter(template => template.template_id !== templateId)
-      );
-
-      // Show success message
-      alert(`Template "${templateName}" has been deleted successfully.`);
-    } catch (error) {
-      console.error('Delete error:', error);
-      alert(`Failed to delete template: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  };
 
   return (
     <div className="space-y-6">
@@ -219,7 +188,7 @@ const Templates: React.FC = () => {
                   {/* <button 
                     onClick={() => {
                       // Use the download API endpoint with authentication
-                      const downloadUrl = `http://localhost:3000/api/templates/${template.template_id}/download`;
+                      const downloadUrl = `${API_BASE_URL}/templates/${template.template_id}/download`;
                       console.log('Download URL:', downloadUrl);
                       
                       // Create a temporary link with authorization header

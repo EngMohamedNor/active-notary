@@ -1,6 +1,6 @@
 import { useAuth } from '../context/AuthContext';
 
-const API_BASE_URL = 'http://localhost:3000/api';
+export const API_BASE_URL = '/api';
 
 // Create a custom hook for authenticated API calls
 export const useAuthenticatedFetch = () => {
@@ -12,9 +12,9 @@ export const useAuthenticatedFetch = () => {
   ): Promise<Response> => {
     const url = `${API_BASE_URL}${endpoint}`;
     
-    const headers: HeadersInit = {
+    const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      ...options.headers,
+      ...(options.headers as Record<string, string>),
     };
 
     // Add authorization header if token exists
@@ -45,7 +45,7 @@ export const apiUtils = {
   // GET request
   get: async (endpoint: string, token?: string): Promise<Response> => {
     const url = `${API_BASE_URL}${endpoint}`;
-    const headers: HeadersInit = {
+    const headers: Record<string, string> = {
       'Content-Type': 'application/json',
     };
 
@@ -69,7 +69,7 @@ export const apiUtils = {
   // POST request
   post: async (endpoint: string, data: any, token?: string): Promise<Response> => {
     const url = `${API_BASE_URL}${endpoint}`;
-    const headers: HeadersInit = {
+    const headers: Record<string, string> = {
       'Content-Type': 'application/json',
     };
 
@@ -94,7 +94,7 @@ export const apiUtils = {
   // PUT request
   put: async (endpoint: string, data: any, token?: string): Promise<Response> => {
     const url = `${API_BASE_URL}${endpoint}`;
-    const headers: HeadersInit = {
+    const headers: Record<string, string> = {
       'Content-Type': 'application/json',
     };
 
@@ -119,7 +119,7 @@ export const apiUtils = {
   // DELETE request
   delete: async (endpoint: string, token?: string): Promise<Response> => {
     const url = `${API_BASE_URL}${endpoint}`;
-    const headers: HeadersInit = {
+    const headers: Record<string, string> = {
       'Content-Type': 'application/json',
     };
 
@@ -143,7 +143,7 @@ export const apiUtils = {
   // File upload with FormData
   upload: async (endpoint: string, formData: FormData, token?: string): Promise<Response> => {
     const url = `${API_BASE_URL}${endpoint}`;
-    const headers: HeadersInit = {};
+    const headers: Record<string, string> = {};
 
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;

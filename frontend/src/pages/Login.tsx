@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Link, useNavigate } from 'react-router';
+import { useNavigate } from 'react-router';
 import { useAuth } from '../context/AuthContext';
 import { Eye, EyeOff, LogIn, UserPlus } from 'lucide-react';
 import longLogo from "../assets/long-logo.png";
@@ -18,7 +18,7 @@ interface RegisterFormData {
 }
 
 const Login: React.FC = () => {
-  const [isLogin, setIsLogin] = useState(true);
+  const [isLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

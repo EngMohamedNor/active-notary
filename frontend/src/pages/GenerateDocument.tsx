@@ -86,7 +86,7 @@ const GenerateDocument: React.FC = () => {
       if (!category && !subCategory) {
         // Initial load - get all templates and extract categories
         setTemplates(data);
-        const categories = [...new Set(data.map((t: Template) => t.category))].sort();
+        const categories = [...new Set(data.map((t: Template) => t.category))].sort() as string[];
         setAvailableCategories(categories);
       } else {
         // Filtered load
@@ -114,7 +114,7 @@ const GenerateDocument: React.FC = () => {
         templates
           .filter(t => t.category === category)
           .map(t => t.sub_category)
-      )].sort();
+      )].sort() as string[];
       setAvailableSubCategories(subCategories);
     }
   };

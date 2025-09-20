@@ -1,4 +1,3 @@
-import React from "react";
 import { FileText, Upload, Users, TrendingUp } from "lucide-react";
 
 export default function Home() {

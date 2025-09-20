@@ -13,7 +13,7 @@ const port = process.env.PORT || 3000;
 
 // Enable CORS for all routes
 app.use(cors({
-  origin: 'http://localhost:5173', // Frontend URL
+  origin: '*', // Frontend URL
   credentials: true,
   exposedHeaders: ['Content-Disposition', 'Content-Length', 'Content-Type', 'X-Filename']
 }));
@@ -50,9 +50,33 @@ app.use('/api/auth', authRoutes);
 // Protected API routes
 app.use('/api', routes);
 
-app.get('/', (req: Request, res: Response) => {
-  res.send('Hello from Express + TypeScript!');
-});
+// Serve static files from frontend dist directory
+const frontendDistPath = path.join(process.cwd(), '..', 'frontend', 'dist');
+
+// Check if frontend dist directory exists
+if (fs.existsSync(frontendDistPath)) {
+  console.log('Serving static files from:', frontendDistPath);
+  app.use(express.static(frontendDistPath));
+  
+  // Serve the React app for the root route and common SPA routes
+  const spaRoutes = ['/', '/login', '/dashboard', '/templates', '/documents', '/generate-document', '/upload-template'];
+  
+  spaRoutes.forEach(route => {
+    app.get(route, (req: Request, res: Response) => {
+      const indexPath = path.join(frontendDistPath, 'index.html');
+      if (fs.existsSync(indexPath)) {
+        res.sendFile(indexPath);
+      } else {
+        res.status(404).send('Frontend not built. Please run "npm run build" in the frontend directory.');
+      }
+    });
+  });
+} else {
+  console.log('Frontend dist directory not found:', frontendDistPath);
+  app.get('/', (req: Request, res: Response) => {
+    res.status(404).send('Frontend not built. Please run "npm run build" in the frontend directory.');
+  });
+}
 
 (async () => {
   try {
