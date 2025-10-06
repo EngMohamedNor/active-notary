@@ -19,7 +19,7 @@ export default function App() {
         <Routes>
           {/* Public Routes */}
           <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+          <Route path="/register-new-user" element={<Register />} />
           
           {/* Protected Routes */}
           <Route element={

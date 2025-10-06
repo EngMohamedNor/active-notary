@@ -121,7 +121,7 @@ const Login: React.FC = () => {
               </button>
             </div>
 
-            <div className="text-center">
+            {/* <div className="text-center">
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 Don't have an account?{' '}
                 <Link 
@@ -131,7 +131,7 @@ const Login: React.FC = () => {
                   Create one here
                 </Link>
               </p>
-            </div>
+            </div> */}
           </form>
         </div>
       </div>
