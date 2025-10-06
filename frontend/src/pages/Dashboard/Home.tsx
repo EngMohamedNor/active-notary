@@ -1,4 +1,4 @@
-import { FileText, Upload, Users, TrendingUp } from "lucide-react";
+ 
 import logo from '../../assets/logo.png';
 
 export default function Home() {
