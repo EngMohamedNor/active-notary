@@ -1,0 +1,85 @@
+/* Custom logo animations */
+@keyframes logoFloat {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-5px) rotate(1deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(0deg);
+  }
+  75% {
+    transform: translateY(-5px) rotate(-1deg);
+  }
+}
+
+@keyframes logoGlow {
+  0%, 100% {
+    filter: drop-shadow(0 0 5px rgba(59, 130, 246, 0.3));
+  }
+  50% {
+    filter: drop-shadow(0 0 20px rgba(59, 130, 246, 0.6)) drop-shadow(0 0 30px rgba(99, 102, 241, 0.4));
+  }
+}
+
+@keyframes logoGlowGreen {
+  0%, 100% {
+    filter: drop-shadow(0 0 5px rgba(34, 197, 94, 0.3));
+  }
+  50% {
+    filter: drop-shadow(0 0 20px rgba(34, 197, 94, 0.6)) drop-shadow(0 0 30px rgba(16, 185, 129, 0.4));
+  }
+}
+
+@keyframes particleOrbit {
+  0% {
+    transform: rotate(0deg) translateX(30px) rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg) translateX(30px) rotate(-360deg);
+  }
+}
+
+@keyframes particleOrbitReverse {
+  0% {
+    transform: rotate(0deg) translateX(25px) rotate(0deg);
+  }
+  100% {
+    transform: rotate(-360deg) translateX(25px) rotate(360deg);
+  }
+}
+
+/* Logo animation classes */
+.logo-float {
+  animation: logoFloat 4s ease-in-out infinite;
+}
+
+.logo-glow-blue {
+  animation: logoGlow 3s ease-in-out infinite;
+}
+
+.logo-glow-green {
+  animation: logoGlowGreen 3s ease-in-out infinite;
+}
+
+.particle-orbit {
+  animation: particleOrbit 6s linear infinite;
+}
+
+.particle-orbit-reverse {
+  animation: particleOrbitReverse 8s linear infinite;
+}
+
+/* Enhanced hover effects */
+.logo-container:hover .logo-float {
+  animation-duration: 2s;
+}
+
+.logo-container:hover .particle-orbit {
+  animation-duration: 3s;
+}
+
+.logo-container:hover .particle-orbit-reverse {
+  animation-duration: 4s;
+}

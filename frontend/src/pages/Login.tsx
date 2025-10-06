@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router';
 import { useAuth } from '../context/AuthContext';
 import { Eye, EyeOff, LogIn } from 'lucide-react';
 import longLogo from "../assets/long-logo.png";
+import '../styles/logo-animations.css';
 
 interface LoginFormData {
   username: string;
@@ -55,7 +56,7 @@ const Login: React.FC = () => {
           {/* Header Section */}
           <div className="text-center">
             <div className="flex items-center justify-center mb-6">
-              <div className="relative group">
+              <div className="relative group logo-container">
                 {/* Animated background glow */}
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full blur-lg opacity-30 animate-pulse"></div>
                 
@@ -65,15 +66,21 @@ const Login: React.FC = () => {
                 {/* Pulsing inner ring */}
                 <div className="absolute inset-2 rounded-full border border-blue-400/50 animate-ping"></div>
                 
-                {/* Main logo with multiple animations */}
+                {/* Orbiting particles */}
+                <div className="absolute inset-0 w-full h-full">
+                  <div className="absolute top-1/2 left-1/2 w-1 h-1 bg-blue-400 rounded-full particle-orbit opacity-60" style={{animationDelay: '0s'}}></div>
+                  <div className="absolute top-1/2 left-1/2 w-1.5 h-1.5 bg-indigo-400 rounded-full particle-orbit-reverse opacity-60" style={{animationDelay: '1s'}}></div>
+                  <div className="absolute top-1/2 left-1/2 w-1 h-1 bg-purple-400 rounded-full particle-orbit opacity-60" style={{animationDelay: '2s'}}></div>
+                </div>
+                
+                {/* Main logo with custom animations */}
                 <img 
                   src={longLogo} 
                   alt="Logo" 
-                  className="relative h-16 w-auto transform transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 hover:drop-shadow-2xl hover:drop-shadow-blue-500/50 animate-bounce" 
-                  style={{animationDuration: '3s', animationIterationCount: 'infinite'}}
+                  className="relative h-16 w-auto logo-float logo-glow-blue transform transition-all duration-500 group-hover:scale-110 group-hover:rotate-3" 
                 />
                 
-                {/* Floating particles around logo */}
+                {/* Static floating particles around logo */}
                 <div className="absolute -top-2 -right-2 w-2 h-2 bg-blue-400 rounded-full animate-ping opacity-60" style={{animationDelay: '0.5s'}}></div>
                 <div className="absolute -bottom-2 -left-2 w-1.5 h-1.5 bg-indigo-400 rounded-full animate-ping opacity-60" style={{animationDelay: '1s'}}></div>
                 <div className="absolute top-1/2 -left-3 w-1 h-1 bg-purple-400 rounded-full animate-ping opacity-60" style={{animationDelay: '1.5s'}}></div>
