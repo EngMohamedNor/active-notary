@@ -646,13 +646,13 @@ const GenerateDocument: React.FC = () => {
                     <div key={placeholder} className="space-y-2">
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                         {placeholder.charAt(0).toUpperCase() + placeholder.slice(1).replace(/_/g, ' ')}
-                        {placeholder.toLowerCase().includes('taariikh') && (
+                        { (placeholder.toLowerCase().includes('taariikh')) || (placeholder.toLowerCase().includes('date')) && (
                           <span className="ml-2 text-xs text-blue-600 dark:text-blue-400">
                             (date)
                           </span>
                         )}
                       </label>
-                      {placeholder.toLowerCase().includes('taariikh') ? (
+                      { (placeholder.toLowerCase().includes('taariikh')) || (placeholder.toLowerCase().includes('date')) ? (
                         <input
                           type="date"
                           {...register(placeholder, { required: `${placeholder} is required` })}

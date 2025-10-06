@@ -4,6 +4,7 @@ import { ScrollToTop } from "./components/common/ScrollToTop";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Login from "./pages/Login";
+import Register from "./pages/Register";
 import Home from "./pages/Dashboard/Home";
 import Templates from "./pages/Templates";
 import UploadTemplate from "./pages/UploadTemplate";
@@ -18,6 +19,7 @@ export default function App() {
         <Routes>
           {/* Public Routes */}
           <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
           
           {/* Protected Routes */}
           <Route element={

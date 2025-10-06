@@ -28,16 +28,16 @@ const navItems: NavItem[] = [
     name: "Dashboard",
     path: "/",
   },
-  {
-    icon: <PageIcon />,
-    name: "Templates",
-    path: "/templates",
-  },
-  {
-    icon: <BoxCubeIcon />,
-    name: "Upload Template",
-    path: "/upload-template",
-  },
+  // {
+  //   icon: <PageIcon />,
+  //   name: "Templates",
+  //   path: "/templates",
+  // },
+  // {
+  //   icon: <BoxCubeIcon />,
+  //   name: "Upload Template",
+  //   path: "/upload-template",
+  // },
   {
     icon: <FileText className="w-5 h-5" />,
     name: "Generate Document",
