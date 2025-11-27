@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { Upload, FileText, CheckCircle, AlertCircle } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
-import { apiUtils } from '../utils/api';
+import React, { useState } from "react";
+import { useForm } from "react-hook-form";
+import { Upload, FileText, CheckCircle, AlertCircle } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
+import { apiUtils } from "../utils/api";
 
 interface UploadFormInputs {
   template_name: string;
@@ -13,65 +13,82 @@ interface UploadFormInputs {
 }
 
 const UploadTemplate: React.FC = () => {
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<UploadFormInputs>();
-  const [status, setStatus] = useState<{ type: 'success' | 'error' | null; message: string }>({ type: null, message: '' });
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<UploadFormInputs>();
+  const [status, setStatus] = useState<{
+    type: "success" | "error" | null;
+    message: string;
+  }>({ type: null, message: "" });
   const [isUploading, setIsUploading] = useState(false);
   const { token } = useAuth();
 
   // Static category options - you can manually update these
   const categoryOptions = [
-    'BAABUUR',
-    'DHUL',
-    'TRANSLATIONS',
-    'WAKAALA',
-    
+    "BAABUUR",
+    "DHUL",
+    "WAKAALA",
+    "TRANSLATIONS",
+    "XEER",
   ];
 
   // Static sub-category options - you can manually update these
   const subCategoryOptions = [
-    'HIBO',
-    'IIB',
-    'WAREEJIN',
-    'WAKAALA',
-    'TRANSLATIONS',
- 
+    "HIBO",
+    "IIB",
+    "WAREEJIN",
+    "WAKAALA",
+    "TRANSLATIONS",
+    "XEER",
   ];
 
   const onSubmit = async (data: UploadFormInputs) => {
     if (!data.template || data.template.length === 0) {
-      setStatus({ type: 'error', message: 'Please select a DOCX file.' });
+      setStatus({ type: "error", message: "Please select a DOCX file." });
       return;
     }
 
     if (!token) {
-      setStatus({ type: 'error', message: 'Authentication required. Please log in.' });
+      setStatus({
+        type: "error",
+        message: "Authentication required. Please log in.",
+      });
       return;
     }
 
     setIsUploading(true);
-    setStatus({ type: null, message: '' });
+    setStatus({ type: null, message: "" });
 
     const formData = new FormData();
-    formData.append('template_name', data.template_name);
-    formData.append('template', data.template[0]);
-    formData.append('category', data.category);
-    formData.append('sub_category', data.sub_category);
+    formData.append("template_name", data.template_name);
+    formData.append("template", data.template[0]);
+    formData.append("category", data.category);
+    formData.append("sub_category", data.sub_category);
     if (data.description) {
-      formData.append('description', data.description);
+      formData.append("description", data.description);
     }
 
     try {
-      const res = await apiUtils.upload('/templates/upload', formData, token);
-      
+      const res = await apiUtils.upload("/templates/upload", formData, token);
+
       if (res.ok) {
-        setStatus({ type: 'success', message: 'Template uploaded successfully!' });
+        setStatus({
+          type: "success",
+          message: "Template uploaded successfully!",
+        });
         reset();
       } else {
         const err = await res.json();
-        setStatus({ type: 'error', message: 'Upload failed: ' + (err.error || 'Unknown error') });
+        setStatus({
+          type: "error",
+          message: "Upload failed: " + (err.error || "Unknown error"),
+        });
       }
     } catch (error) {
-      setStatus({ type: 'error', message: 'Upload failed: ' + error });
+      setStatus({ type: "error", message: "Upload failed: " + error });
     } finally {
       setIsUploading(false);
     }
@@ -82,7 +99,9 @@ const UploadTemplate: React.FC = () => {
       {/* Header */}
       <div>
         <h2 className="text-2xl font-bold text-gray-900">Upload Template</h2>
-        <p className="mt-1 text-sm text-gray-500">Upload a new DOCX template to your library</p>
+        <p className="mt-1 text-sm text-gray-500">
+          Upload a new DOCX template to your library
+        </p>
       </div>
 
       {/* Upload Form */}
@@ -91,18 +110,25 @@ const UploadTemplate: React.FC = () => {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {/* Template Name */}
             <div>
-              <label htmlFor="template_name" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="template_name"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 Template Name *
               </label>
               <input
                 id="template_name"
                 type="text"
-                {...register('template_name', { required: 'Template name is required' })}
+                {...register("template_name", {
+                  required: "Template name is required",
+                })}
                 className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                 placeholder="Enter a descriptive name for your template"
               />
               {errors.template_name && (
-                <p className="mt-1 text-sm text-red-600">{errors.template_name.message}</p>
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.template_name.message}
+                </p>
               )}
             </div>
 
@@ -110,12 +136,17 @@ const UploadTemplate: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Category */}
               <div>
-                <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="category"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Category *
                 </label>
                 <select
                   id="category"
-                  {...register('category', { required: 'Category is required' })}
+                  {...register("category", {
+                    required: "Category is required",
+                  })}
                   className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                 >
                   <option value="">Select a category</option>
@@ -126,18 +157,25 @@ const UploadTemplate: React.FC = () => {
                   ))}
                 </select>
                 {errors.category && (
-                  <p className="mt-1 text-sm text-red-600">{errors.category.message}</p>
+                  <p className="mt-1 text-sm text-red-600">
+                    {errors.category.message}
+                  </p>
                 )}
               </div>
 
               {/* Sub-Category */}
               <div>
-                <label htmlFor="sub_category" className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="sub_category"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Sub-Category *
                 </label>
                 <select
                   id="sub_category"
-                  {...register('sub_category', { required: 'Sub-category is required' })}
+                  {...register("sub_category", {
+                    required: "Sub-category is required",
+                  })}
                   className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                 >
                   <option value="">Select a sub-category</option>
@@ -148,20 +186,25 @@ const UploadTemplate: React.FC = () => {
                   ))}
                 </select>
                 {errors.sub_category && (
-                  <p className="mt-1 text-sm text-red-600">{errors.sub_category.message}</p>
+                  <p className="mt-1 text-sm text-red-600">
+                    {errors.sub_category.message}
+                  </p>
                 )}
               </div>
             </div>
 
             {/* Description */}
             <div>
-              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="description"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 Description
               </label>
               <textarea
                 id="description"
                 rows={3}
-                {...register('description')}
+                {...register("description")}
                 className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                 placeholder="Provide a brief description of this template (optional)"
               />
@@ -169,7 +212,10 @@ const UploadTemplate: React.FC = () => {
 
             {/* File Upload */}
             <div>
-              <label htmlFor="template" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="template"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 DOCX File *
               </label>
               <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md hover:border-blue-400 transition-colors">
@@ -185,17 +231,23 @@ const UploadTemplate: React.FC = () => {
                         id="template"
                         type="file"
                         accept=".docx"
-                        {...register('template', { required: 'Please select a DOCX file' })}
+                        {...register("template", {
+                          required: "Please select a DOCX file",
+                        })}
                         className="sr-only"
                       />
                     </label>
                     <p className="pl-1">or drag and drop</p>
                   </div>
-                  <p className="text-xs text-gray-500">DOCX files only, up to 10MB</p>
+                  <p className="text-xs text-gray-500">
+                    DOCX files only, up to 10MB
+                  </p>
                 </div>
               </div>
               {errors.template && (
-                <p className="mt-1 text-sm text-red-600">{errors.template.message}</p>
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.template.message}
+                </p>
               )}
             </div>
 
@@ -223,21 +275,27 @@ const UploadTemplate: React.FC = () => {
 
           {/* Status Message */}
           {status.message && (
-            <div className={`mt-6 rounded-md p-4 ${
-              status.type === 'success' ? 'bg-green-50' : 'bg-red-50'
-            }`}>
+            <div
+              className={`mt-6 rounded-md p-4 ${
+                status.type === "success" ? "bg-green-50" : "bg-red-50"
+              }`}
+            >
               <div className="flex">
                 <div className="flex-shrink-0">
-                  {status.type === 'success' ? (
+                  {status.type === "success" ? (
                     <CheckCircle className="h-5 w-5 text-green-400" />
                   ) : (
                     <AlertCircle className="h-5 w-5 text-red-400" />
                   )}
                 </div>
                 <div className="ml-3">
-                  <p className={`text-sm font-medium ${
-                    status.type === 'success' ? 'text-green-800' : 'text-red-800'
-                  }`}>
+                  <p
+                    className={`text-sm font-medium ${
+                      status.type === "success"
+                        ? "text-green-800"
+                        : "text-red-800"
+                    }`}
+                  >
                     {status.message}
                   </p>
                 </div>
@@ -248,10 +306,16 @@ const UploadTemplate: React.FC = () => {
       </div>
 
       {/* Upload Guidelines */}
-      <div className="card-hover rounded-2xl p-6" style={{
-        background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 51, 234, 0.1) 100%)'
-      }}>
-        <h3 className="text-lg font-medium text-blue-900 mb-2">Upload Guidelines</h3>
+      <div
+        className="card-hover rounded-2xl p-6"
+        style={{
+          background:
+            "linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 51, 234, 0.1) 100%)",
+        }}
+      >
+        <h3 className="text-lg font-medium text-blue-900 mb-2">
+          Upload Guidelines
+        </h3>
         <ul className="text-sm text-blue-800 space-y-1">
           <li>• Only DOCX files are supported</li>
           <li>• Maximum file size is 10MB</li>

@@ -3,17 +3,15 @@ import { Link, useLocation } from "react-router";
 
 // Assume these icons are imported from an icon library
 import {
- 
   ChevronDownIcon,
   GridIcon,
   HorizontaLDots,
   // PageIcon,
 } from "../icons";
-import { FileText, FolderOpen } from "lucide-react";
+import { FileText, FolderOpen, Calculator, Users } from "lucide-react";
 import { useSidebar } from "../context/SidebarContext";
 import SidebarWidget from "./SidebarWidget";
 import longLogo from "../assets/long-logo.png";
-
 
 type NavItem = {
   name: string;
@@ -47,6 +45,27 @@ const navItems: NavItem[] = [
     icon: <FolderOpen className="w-5 h-5" />,
     name: "Documents List",
     path: "/documents",
+  },
+  {
+    icon: <Calculator className="w-5 h-5" />,
+    name: "Accounting",
+    subItems: [
+      { name: "Dashboard", path: "/accounting/dashboard" },
+      { name: "Chart of Accounts", path: "/accounting/chart-of-accounts" },
+      { name: "Journal Entries", path: "/accounting/journal-entries" },
+      { name: "Trial Balance", path: "/accounting/trial-balance" },
+      { name: "Ledger Entry", path: "/accounting/ledger-entry" },
+    ],
+  },
+  {
+    icon: <Users className="w-5 h-5" />,
+    name: "Parties",
+    subItems: [
+      { name: "All Parties", path: "/parties" },
+      { name: "Customers", path: "/parties/customers" },
+      { name: "Vendors", path: "/parties/vendors" },
+      { name: "Employees", path: "/parties/employees" },
+    ],
   },
 ];
 
@@ -262,7 +281,11 @@ const AppSidebar: React.FC = () => {
           <img
             src={longLogo}
             alt="Logo"
-            className={isExpanded || isHovered || isMobileOpen ? "h-14 w-auto" : "h-12 w-12"}
+            className={
+              isExpanded || isHovered || isMobileOpen
+                ? "h-14 w-auto"
+                : "h-12 w-12"
+            }
           />
         </Link>
       </div>

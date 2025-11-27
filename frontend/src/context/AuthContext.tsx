@@ -1,11 +1,17 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { API_BASE_URL } from '../utils/api';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
+import { API_BASE_URL } from "../utils/api";
 
 interface User {
   user_id: string;
   username: string;
   email?: string;
-  role: 'admin' | 'user';
+  role: "admin" | "user";
   is_active: boolean;
 }
 
@@ -13,7 +19,11 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   login: (username: string, password: string) => Promise<boolean>;
-  register: (username: string, password: string, email?: string) => Promise<boolean>;
+  register: (
+    username: string,
+    password: string,
+    email?: string
+  ) => Promise<boolean>;
   logout: () => void;
   isLoading: boolean;
   isAuthenticated: boolean;
@@ -24,7 +34,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };
@@ -42,7 +52,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Check for existing token on app load
   useEffect(() => {
-    const storedToken = localStorage.getItem('token');
+    const storedToken = localStorage.getItem("token");
     if (storedToken) {
       setToken(storedToken);
       // Verify token and get user info
@@ -56,8 +66,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const response = await fetch(`${API_BASE_URL}/auth/profile`, {
         headers: {
-          'Authorization': `Bearer ${authToken}`,
-          'Content-Type': 'application/json',
+          Authorization: `Bearer ${authToken}`,
+          "Content-Type": "application/json",
         },
       });
 
@@ -66,24 +76,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setUser(data.user);
       } else {
         // Token is invalid, remove it
-        localStorage.removeItem('token');
+        localStorage.removeItem("token");
         setToken(null);
       }
     } catch (error) {
-      console.error('Error fetching user profile:', error);
-      localStorage.removeItem('token');
+      console.error("Error fetching user profile:", error);
+      localStorage.removeItem("token");
       setToken(null);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const login = async (username: string, password: string): Promise<boolean> => {
+  const login = async (
+    username: string,
+    password: string
+  ): Promise<boolean> => {
     try {
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ username, password }),
       });
@@ -92,25 +105,43 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const data = await response.json();
         setToken(data.token);
         setUser(data.user);
-        localStorage.setItem('token', data.token);
+        localStorage.setItem("token", data.token);
         return true;
       } else {
-        const errorData = await response.json();
-        console.error('Login failed:', errorData.error);
+        // Check if response has content before parsing
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          try {
+            const errorData = await response.json();
+            console.error(
+              "Login failed:",
+              errorData.error || errorData.message || "Unknown error"
+            );
+          } catch (parseError) {
+            console.error("Login failed: Unable to parse error response");
+          }
+        } else {
+          const text = await response.text();
+          console.error("Login failed:", text || `HTTP ${response.status}`);
+        }
         return false;
       }
     } catch (error) {
-      console.error('Login error:', error);
+      console.error("Login error:", error);
       return false;
     }
   };
 
-  const register = async (username: string, password: string, email?: string): Promise<boolean> => {
+  const register = async (
+    username: string,
+    password: string,
+    email?: string
+  ): Promise<boolean> => {
     try {
       const response = await fetch(`${API_BASE_URL}/auth/register`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ username, password, email }),
       });
@@ -119,15 +150,34 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const data = await response.json();
         setToken(data.token);
         setUser(data.user);
-        localStorage.setItem('token', data.token);
+        localStorage.setItem("token", data.token);
         return true;
       } else {
-        const errorData = await response.json();
-        console.error('Registration failed:', errorData.error);
+        // Check if response has content before parsing
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          try {
+            const errorData = await response.json();
+            console.error(
+              "Registration failed:",
+              errorData.error || errorData.message || "Unknown error"
+            );
+          } catch (parseError) {
+            console.error(
+              "Registration failed: Unable to parse error response"
+            );
+          }
+        } else {
+          const text = await response.text();
+          console.error(
+            "Registration failed:",
+            text || `HTTP ${response.status}`
+          );
+        }
         return false;
       }
     } catch (error) {
-      console.error('Registration error:', error);
+      console.error("Registration error:", error);
       return false;
     }
   };
@@ -135,7 +185,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const logout = () => {
     setUser(null);
     setToken(null);
-    localStorage.removeItem('token');
+    localStorage.removeItem("token");
   };
 
   const value: AuthContextType = {
@@ -148,10 +198,5 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     isAuthenticated,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
-

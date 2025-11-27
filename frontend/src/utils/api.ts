@@ -1,6 +1,7 @@
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from "../context/AuthContext";
 
-export const API_BASE_URL =  import.meta.env.VITE_API_BASE_URL + '/api';
+export const API_BASE_URL =
+  (import.meta.env.VITE_API_BASE_URL || "http://localhost:3000") + "/api";
 
 // Create a custom hook for authenticated API calls
 export const useAuthenticatedFetch = () => {
@@ -11,15 +12,15 @@ export const useAuthenticatedFetch = () => {
     options: RequestInit = {}
   ): Promise<Response> => {
     const url = `${API_BASE_URL}${endpoint}`;
-    
+
     const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       ...(options.headers as Record<string, string>),
     };
 
     // Add authorization header if token exists
     if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+      headers["Authorization"] = `Bearer ${token}`;
     }
 
     const response = await fetch(url, {
@@ -30,8 +31,8 @@ export const useAuthenticatedFetch = () => {
     // If token is invalid or expired, the response will be 401/403
     if (response.status === 401 || response.status === 403) {
       // Clear the token and redirect to login
-      localStorage.removeItem('token');
-      window.location.href = '/login';
+      localStorage.removeItem("token");
+      window.location.href = "/login";
     }
 
     return response;
@@ -46,71 +47,79 @@ export const apiUtils = {
   get: async (endpoint: string, token?: string): Promise<Response> => {
     const url = `${API_BASE_URL}${endpoint}`;
     const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     };
 
     if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+      headers["Authorization"] = `Bearer ${token}`;
     }
 
     const response = await fetch(url, {
-      method: 'GET',
+      method: "GET",
       headers,
     });
 
     if (response.status === 401 || response.status === 403) {
-      localStorage.removeItem('token');
-      window.location.href = '/login';
+      localStorage.removeItem("token");
+      window.location.href = "/login";
     }
 
     return response;
   },
 
   // POST request
-  post: async (endpoint: string, data: any, token?: string): Promise<Response> => {
+  post: async (
+    endpoint: string,
+    data: any,
+    token?: string
+  ): Promise<Response> => {
     const url = `${API_BASE_URL}${endpoint}`;
     const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     };
 
     if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+      headers["Authorization"] = `Bearer ${token}`;
     }
 
     const response = await fetch(url, {
-      method: 'POST',
+      method: "POST",
       headers,
       body: JSON.stringify(data),
     });
 
     if (response.status === 401 || response.status === 403) {
-      localStorage.removeItem('token');
-      window.location.href = '/login';
+      localStorage.removeItem("token");
+      window.location.href = "/login";
     }
 
     return response;
   },
 
   // PUT request
-  put: async (endpoint: string, data: any, token?: string): Promise<Response> => {
+  put: async (
+    endpoint: string,
+    data: any,
+    token?: string
+  ): Promise<Response> => {
     const url = `${API_BASE_URL}${endpoint}`;
     const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     };
 
     if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+      headers["Authorization"] = `Bearer ${token}`;
     }
 
     const response = await fetch(url, {
-      method: 'PUT',
+      method: "PUT",
       headers,
       body: JSON.stringify(data),
     });
 
     if (response.status === 401 || response.status === 403) {
-      localStorage.removeItem('token');
-      window.location.href = '/login';
+      localStorage.removeItem("token");
+      window.location.href = "/login";
     }
 
     return response;
@@ -120,44 +129,48 @@ export const apiUtils = {
   delete: async (endpoint: string, token?: string): Promise<Response> => {
     const url = `${API_BASE_URL}${endpoint}`;
     const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     };
 
     if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+      headers["Authorization"] = `Bearer ${token}`;
     }
 
     const response = await fetch(url, {
-      method: 'DELETE',
+      method: "DELETE",
       headers,
     });
 
     if (response.status === 401 || response.status === 403) {
-      localStorage.removeItem('token');
-      window.location.href = '/login';
+      localStorage.removeItem("token");
+      window.location.href = "/login";
     }
 
     return response;
   },
 
   // File upload with FormData
-  upload: async (endpoint: string, formData: FormData, token?: string): Promise<Response> => {
+  upload: async (
+    endpoint: string,
+    formData: FormData,
+    token?: string
+  ): Promise<Response> => {
     const url = `${API_BASE_URL}${endpoint}`;
     const headers: Record<string, string> = {};
 
     if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+      headers["Authorization"] = `Bearer ${token}`;
     }
 
     const response = await fetch(url, {
-      method: 'POST',
+      method: "POST",
       headers,
       body: formData,
     });
 
     if (response.status === 401 || response.status === 403) {
-      localStorage.removeItem('token');
-      window.location.href = '/login';
+      localStorage.removeItem("token");
+      window.location.href = "/login";
     }
 
     return response;
