@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Save, X, Users, Calendar } from 'lucide-react';
-import { useApiMutation, useApi } from '../../hooks';
+import { useApiMutation } from '../../hooks';
 import { partyApi } from '../../services/api';
 
 interface PartyFormData {
@@ -139,7 +139,7 @@ const PartyForm: React.FC<PartyFormProps> = ({ party, onSuccess, onCancel }) => 
 
       {error && (
         <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md">
-          <p className="text-xs text-red-800 dark:text-red-200">{error}</p>
+          <p className="text-xs text-red-800 dark:text-red-200">{error.message || String(error)}</p>
         </div>
       )}
 

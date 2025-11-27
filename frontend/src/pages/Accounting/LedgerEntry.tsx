@@ -240,7 +240,9 @@ const LedgerEntry: React.FC = () => {
 
       {error && (
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md p-3">
-          <p className="text-xs text-red-800 dark:text-red-200">{error}</p>
+          <p className="text-xs text-red-800 dark:text-red-200">
+            {error.message || String(error)}
+          </p>
         </div>
       )}
 

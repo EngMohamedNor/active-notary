@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
-import { API_BASE_URL } from "../utils/api";
 
 export function useApi<T = any>(
   apiCall: () => Promise<T | null>,
@@ -46,7 +45,6 @@ export function useApiMutation<T = any, P = any>(
 } {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  const { token } = useAuth();
 
   const mutate = async (params: P): Promise<T> => {
     try {

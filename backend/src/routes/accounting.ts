@@ -122,8 +122,8 @@ router.get(
           debit: entry.debit,
           credit: entry.credit,
           description: entry.description,
-          journalDate: entry.journal?.date,
-          journalDescription: entry.journal?.description,
+          journalDate: (entry as any).journal?.date,
+          journalDescription: (entry as any).journal?.description,
           createdAt: entry.created_at,
         })),
         pagination: {
@@ -296,11 +296,11 @@ router.get(
         accountType: account.account_type,
         subType: account.sub_type,
         parentId: account.parent_id,
-        parent: account.parent
+        parent: (account as any).parent
           ? {
-              id: account.parent.id,
-              accountCode: account.parent.account_code,
-              accountName: account.parent.account_name,
+              id: (account as any).parent.id,
+              accountCode: (account as any).parent.account_code,
+              accountName: (account as any).parent.account_name,
             }
           : null,
         isActive: account.is_active,
@@ -713,7 +713,7 @@ router.get(
         referenceId: journal.reference_id,
         createdAt: journal.created_at,
         lines:
-          journal.journal_lines?.map((line) => ({
+          (journal as any).journal_lines?.map((line: any) => ({
             id: line.id,
             accountCode: line.account_code,
             accountName: line.account?.account_name,
@@ -908,7 +908,7 @@ router.post(
             description: createdJournal!.description,
             createdAt: createdJournal!.created_at,
             lines:
-              createdJournal!.journal_lines?.map((line) => ({
+              (createdJournal as any)!.journal_lines?.map((line: any) => ({
                 id: line.id,
                 accountCode: line.account_code,
                 accountName: line.account?.account_name,
