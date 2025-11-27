@@ -1079,7 +1079,7 @@ const GenerateDocument: React.FC = () => {
                           className="react-select-container"
                           classNamePrefix="react-select"
                           styles={{
-                            control: (base, state) => ({
+                            control: (base: any, state: any) => ({
                               ...base,
                               backgroundColor: "white",
                               borderColor: state.isFocused
@@ -1093,12 +1093,12 @@ const GenerateDocument: React.FC = () => {
                                 borderColor: "#3b82f6",
                               },
                             }),
-                            menu: (base) => ({
+                            menu: (base: any) => ({
                               ...base,
                               zIndex: 9999,
                             }),
                           }}
-                          theme={(theme) => ({
+                          theme={(theme: any) => ({
                             ...theme,
                             colors: {
                               ...theme.colors,
@@ -1143,7 +1143,7 @@ const GenerateDocument: React.FC = () => {
                             className="react-select-container"
                             classNamePrefix="react-select"
                             styles={{
-                              control: (base, state) => ({
+                              control: (base: any, state: any) => ({
                                 ...base,
                                 backgroundColor: "white",
                                 borderColor: state.isFocused
@@ -1158,12 +1158,12 @@ const GenerateDocument: React.FC = () => {
                                   borderColor: "#3b82f6",
                                 },
                               }),
-                              menu: (base) => ({
+                              menu: (base: any) => ({
                                 ...base,
                                 zIndex: 9999,
                               }),
                             }}
-                            theme={(theme) => ({
+                            theme={(theme: any) => ({
                               ...theme,
                               colors: {
                                 ...theme.colors,
