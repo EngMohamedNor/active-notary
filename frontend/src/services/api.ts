@@ -200,6 +200,13 @@ export const accountingApi = {
   },
 };
 
+// Dashboard API
+export const dashboardApi = {
+  getStats: async () => {
+    return apiCall("/dashboard/stats");
+  },
+};
+
 // Party API
 export const partyApi = {
   getParties: async (params?: {

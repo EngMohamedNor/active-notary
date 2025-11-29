@@ -2,6 +2,7 @@ import { Router, Request, Response } from "express";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import { Op } from "sequelize";
 import DocumentTemplate from "./models/documentTemplate.js";
 import {
   Book,
@@ -9,6 +10,7 @@ import {
   GeneralJournal,
   JournalLine,
   ChartOfAccount,
+  Party,
 } from "./models/index.js";
 import { JournalService, JournalEntry } from "./services/JournalService.js";
 import sequelize from "./models/index.js";
@@ -1002,5 +1004,325 @@ router.get(
 router.get("/users", (req: Request, res: Response) => {
   res.json([{ id: 1, name: "John Doe" }]);
 });
+
+// GET /api/dashboard/stats - Get dashboard statistics
+router.get(
+  "/dashboard/stats",
+  authenticateToken,
+  async (req: Request, res: Response) => {
+    try {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+      const endOfMonth = new Date(
+        today.getFullYear(),
+        today.getMonth() + 1,
+        0,
+        23,
+        59,
+        59,
+        999
+      );
+
+      // Document Statistics
+      const totalDocuments = await Document.count();
+      const documentsToday = await Document.count({
+        where: {
+          created_at: {
+            [Op.gte]: today,
+            [Op.lt]: tomorrow,
+          },
+        },
+      });
+      const documentsThisMonth = await Document.count({
+        where: {
+          created_at: {
+            [Op.gte]: startOfMonth,
+            [Op.lte]: endOfMonth,
+          },
+        },
+      });
+
+      const documentTotals = await Document.findAll({
+        attributes: [
+          [
+            sequelize.fn(
+              "COALESCE",
+              sequelize.fn("SUM", sequelize.col("total")),
+              0
+            ),
+            "totalRevenue",
+          ],
+          [
+            sequelize.fn(
+              "COALESCE",
+              sequelize.fn("SUM", sequelize.col("paid")),
+              0
+            ),
+            "totalPaid",
+          ],
+          [
+            sequelize.fn(
+              "COALESCE",
+              sequelize.fn("SUM", sequelize.col("balance")),
+              0
+            ),
+            "outstandingBalance",
+          ],
+        ],
+        raw: true,
+      });
+
+      const docTotals = documentTotals[0] as any;
+
+      // Party Statistics
+      const totalCustomers = await Party.count({
+        where: { party_type: "customer", is_active: true },
+      });
+      const totalSuppliers = await Party.count({
+        where: { party_type: "vendor", is_active: true },
+      });
+      const totalEmployees = await Party.count({
+        where: { party_type: "employee", is_active: true },
+      });
+
+      // Calculate Accounts Receivable (customer balances)
+      const customerIds = await Party.findAll({
+        where: { party_type: "customer", is_active: true },
+        attributes: ["id"],
+        raw: true,
+      }).then((customers) => customers.map((c: any) => c.id));
+
+      let accountsReceivable = 0;
+      if (customerIds.length > 0) {
+        const customerBalances = await JournalLine.findAll({
+          where: {
+            party_id: { [Op.in]: customerIds },
+          },
+          attributes: [
+            [
+              sequelize.fn(
+                "COALESCE",
+                sequelize.fn("SUM", sequelize.literal("debit - credit")),
+                0
+              ),
+              "balance",
+            ],
+          ],
+          raw: true,
+        });
+        accountsReceivable = parseFloat(
+          (customerBalances[0] as any)?.balance || "0"
+        );
+      }
+
+      // Calculate Accounts Payable (vendor balances)
+      const vendorIds = await Party.findAll({
+        where: { party_type: "vendor", is_active: true },
+        attributes: ["id"],
+        raw: true,
+      }).then((vendors) => vendors.map((v: any) => v.id));
+
+      let accountsPayable = 0;
+      if (vendorIds.length > 0) {
+        const vendorBalances = await JournalLine.findAll({
+          where: {
+            party_id: { [Op.in]: vendorIds },
+          },
+          attributes: [
+            [
+              sequelize.fn(
+                "COALESCE",
+                sequelize.fn("SUM", sequelize.literal("credit - debit")),
+                0
+              ),
+              "balance",
+            ],
+          ],
+          raw: true,
+        });
+        accountsPayable = parseFloat(
+          (vendorBalances[0] as any)?.balance || "0"
+        );
+      }
+
+      // Accounting Statistics
+      const trialBalance = await JournalService.getTrialBalance();
+
+      // Get account categories
+      const accountCodes = trialBalance.map((acc) => acc.accountCode);
+      let categoryMap = new Map<string, string>();
+      if (accountCodes.length > 0) {
+        const accounts = await ChartOfAccount.findAll({
+          where: { account_code: { [Op.in]: accountCodes } },
+          attributes: ["account_code", "category"],
+        });
+        categoryMap = new Map(
+          accounts.map((acc) => [acc.account_code, acc.category])
+        );
+      }
+
+      const assets = trialBalance.filter(
+        (acc) => categoryMap.get(acc.accountCode) === "asset"
+      );
+      const liabilities = trialBalance.filter(
+        (acc) => categoryMap.get(acc.accountCode) === "liability"
+      );
+      const equity = trialBalance.filter(
+        (acc) => categoryMap.get(acc.accountCode) === "equity"
+      );
+      const revenue = trialBalance.filter(
+        (acc) => categoryMap.get(acc.accountCode) === "revenue"
+      );
+      const expenses = trialBalance.filter(
+        (acc) => categoryMap.get(acc.accountCode) === "expense"
+      );
+
+      const totalAssets = assets.reduce(
+        (sum, acc) => sum + Math.abs(acc.balance || 0),
+        0
+      );
+      const totalLiabilities = liabilities.reduce(
+        (sum, acc) => sum + Math.abs(acc.balance || 0),
+        0
+      );
+      const totalEquityBase = equity.reduce(
+        (sum, acc) => sum + Math.abs(acc.balance || 0),
+        0
+      );
+      const totalRevenueAccounting = revenue.reduce(
+        (sum, acc) => sum + (acc.balance || 0),
+        0
+      );
+      const totalExpensesAccounting = expenses.reduce(
+        (sum, acc) => sum + Math.abs(acc.balance || 0),
+        0
+      );
+      const netIncome = totalRevenueAccounting - totalExpensesAccounting;
+      const totalEquity = totalEquityBase + netIncome;
+
+      const activeAccounts = await ChartOfAccount.count({
+        where: { is_active: true },
+      });
+
+      const journalEntriesToday = await GeneralJournal.count({
+        where: {
+          date: {
+            [Op.gte]: today,
+            [Op.lt]: tomorrow,
+          },
+        },
+      });
+
+      // Cash Balance
+      const cashAccounts = await ChartOfAccount.findAll({
+        where: {
+          is_active: true,
+          [Op.or]: [
+            { sub_type: "Checking & Saving" },
+            { account_type: { [Op.like]: "%Checking%" } },
+            { account_type: { [Op.like]: "%Saving%" } },
+            { account_type: { [Op.like]: "%Cash%" } },
+          ],
+        },
+      }).catch(() => {
+        return ChartOfAccount.findAll({
+          where: {
+            is_active: true,
+            [Op.or]: [
+              { account_type: { [Op.like]: "%Checking%" } },
+              { account_type: { [Op.like]: "%Saving%" } },
+              { account_type: { [Op.like]: "%Cash%" } },
+            ],
+          },
+        });
+      });
+
+      let cashBalance = 0;
+      for (const account of cashAccounts) {
+        const balance = await JournalService.getAccountBalance(
+          account.account_code
+        );
+        cashBalance += balance.balance;
+      }
+
+      // Monthly Revenue and Expenses
+      const monthlyJournalLines = await JournalLine.findAll({
+        include: [
+          {
+            model: GeneralJournal,
+            as: "journal",
+            where: {
+              date: {
+                [Op.gte]: startOfMonth,
+                [Op.lte]: endOfMonth,
+              },
+            },
+            attributes: [],
+          },
+          {
+            model: ChartOfAccount,
+            as: "account",
+            attributes: ["category"],
+          },
+        ],
+      });
+
+      let monthlyRevenue = 0;
+      let monthlyExpenses = 0;
+
+      monthlyJournalLines.forEach((line: any) => {
+        const category = line.account?.category;
+        if (category === "revenue") {
+          monthlyRevenue += parseFloat(line.credit?.toString() || "0");
+        } else if (category === "expense") {
+          monthlyExpenses += parseFloat(line.debit?.toString() || "0");
+        }
+      });
+
+      res.json({
+        documents: {
+          total: totalDocuments,
+          today: documentsToday,
+          thisMonth: documentsThisMonth,
+          totalRevenue: parseFloat(docTotals?.totalRevenue || "0"),
+          totalPaid: parseFloat(docTotals?.totalPaid || "0"),
+          outstandingBalance: parseFloat(docTotals?.outstandingBalance || "0"),
+        },
+        parties: {
+          totalCustomers,
+          totalSuppliers,
+          totalEmployees,
+          accountsReceivable,
+          accountsPayable,
+        },
+        accounting: {
+          totalAssets,
+          totalLiabilities,
+          totalEquity,
+          totalRevenue: totalRevenueAccounting,
+          totalExpenses: totalExpensesAccounting,
+          netIncome,
+          activeAccounts,
+          journalEntriesToday,
+        },
+        financial: {
+          cashBalance,
+          monthlyRevenue,
+          monthlyExpenses,
+        },
+      });
+    } catch (error) {
+      console.error("Error getting dashboard stats:", error);
+      res.status(500).json({
+        error: "Failed to get dashboard statistics",
+        details: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  }
+);
 
 export default router;
