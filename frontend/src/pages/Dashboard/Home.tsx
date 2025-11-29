@@ -31,7 +31,7 @@ const formatNumber = (value: number) => {
 
 export default function Home() {
   // const { data: stats, loading } = useApi(() => dashboardApi.getStats());
-  let stats: any = {};
+
   // if (loading) {
   //   return (
   //     <div className="flex items-center justify-center h-64">
@@ -40,325 +40,325 @@ export default function Home() {
   //   );
   // }
 
-  const documents = stats?.documents || {};
-  const parties = stats?.parties || {};
-  const accounting = stats?.accounting || {};
-  const financial = stats?.financial || {};
+  // const documents = stats?.documents || {};
+  // const parties = stats?.parties || {};
+  // const accounting = stats?.accounting || {};
+  // const financial = stats?.financial || {};
 
-  // Chart data for Revenue vs Expenses
-  const revenueExpensesChart = {
-    series: [
-      {
-        name: "Revenue",
-        data: [accounting.totalRevenue || 0],
-      },
-      {
-        name: "Expenses",
-        data: [accounting.totalExpenses || 0],
-      },
-    ],
-    options: {
-      chart: {
-        type: "bar",
-        height: 350,
-        toolbar: { show: false },
-      },
-      plotOptions: {
-        bar: {
-          horizontal: false,
-          columnWidth: "55%",
-        },
-      },
-      dataLabels: {
-        enabled: false,
-      },
-      stroke: {
-        show: true,
-        width: 2,
-        colors: ["transparent"],
-      },
-      xaxis: {
-        categories: ["Current"],
-      },
-      yaxis: {
-        title: {
-          text: "Amount ($)",
-        },
-      },
-      fill: {
-        opacity: 1,
-      },
-      colors: ["#10b981", "#ef4444"],
-      tooltip: {
-        y: {
-          formatter: (val: number) => formatCurrency(val),
-        },
-      },
-    },
-  };
+  // // Chart data for Revenue vs Expenses
+  // const revenueExpensesChart = {
+  //   series: [
+  //     {
+  //       name: "Revenue",
+  //       data: [accounting.totalRevenue || 0],
+  //     },
+  //     {
+  //       name: "Expenses",
+  //       data: [accounting.totalExpenses || 0],
+  //     },
+  //   ],
+  //   options: {
+  //     chart: {
+  //       type: "bar",
+  //       height: 350,
+  //       toolbar: { show: false },
+  //     },
+  //     plotOptions: {
+  //       bar: {
+  //         horizontal: false,
+  //         columnWidth: "55%",
+  //       },
+  //     },
+  //     dataLabels: {
+  //       enabled: false,
+  //     },
+  //     stroke: {
+  //       show: true,
+  //       width: 2,
+  //       colors: ["transparent"],
+  //     },
+  //     xaxis: {
+  //       categories: ["Current"],
+  //     },
+  //     yaxis: {
+  //       title: {
+  //         text: "Amount ($)",
+  //       },
+  //     },
+  //     fill: {
+  //       opacity: 1,
+  //     },
+  //     colors: ["#10b981", "#ef4444"],
+  //     tooltip: {
+  //       y: {
+  //         formatter: (val: number) => formatCurrency(val),
+  //       },
+  //     },
+  //   },
+  // };
 
-  // Chart data for Financial Overview
-  const financialOverviewChart = {
-    series: [
-      accounting.totalAssets || 0,
-      accounting.totalLiabilities || 0,
-      accounting.totalEquity || 0,
-    ],
-    options: {
-      chart: {
-        type: "donut",
-        height: 350,
-      },
-      labels: ["Assets", "Liabilities", "Equity"],
-      colors: ["#3b82f6", "#ef4444", "#10b981"],
-      legend: {
-        position: "bottom",
-      },
-      tooltip: {
-        y: {
-          formatter: (val: number) => formatCurrency(val),
-        },
-      },
-    },
-  };
+  // // Chart data for Financial Overview
+  // const financialOverviewChart = {
+  //   series: [
+  //     accounting.totalAssets || 0,
+  //     accounting.totalLiabilities || 0,
+  //     accounting.totalEquity || 0,
+  //   ],
+  //   options: {
+  //     chart: {
+  //       type: "donut",
+  //       height: 350,
+  //     },
+  //     labels: ["Assets", "Liabilities", "Equity"],
+  //     colors: ["#3b82f6", "#ef4444", "#10b981"],
+  //     legend: {
+  //       position: "bottom",
+  //     },
+  //     tooltip: {
+  //       y: {
+  //         formatter: (val: number) => formatCurrency(val),
+  //       },
+  //     },
+  //   },
+  // };
 
-  // Chart data for Monthly Revenue vs Expenses
-  const monthlyChart = {
-    series: [
-      {
-        name: "Revenue",
-        data: [financial.monthlyRevenue || 0],
-      },
-      {
-        name: "Expenses",
-        data: [financial.monthlyExpenses || 0],
-      },
-    ],
-    options: {
-      chart: {
-        type: "bar",
-        height: 350,
-        toolbar: { show: false },
-      },
-      plotOptions: {
-        bar: {
-          horizontal: false,
-          columnWidth: "55%",
-        },
-      },
-      dataLabels: {
-        enabled: false,
-      },
-      stroke: {
-        show: true,
-        width: 2,
-        colors: ["transparent"],
-      },
-      xaxis: {
-        categories: ["This Month"],
-      },
-      yaxis: {
-        title: {
-          text: "Amount ($)",
-        },
-      },
-      fill: {
-        opacity: 1,
-      },
-      colors: ["#10b981", "#ef4444"],
-      tooltip: {
-        y: {
-          formatter: (val: number) => formatCurrency(val),
-        },
-      },
-    },
-  };
+  // // Chart data for Monthly Revenue vs Expenses
+  // const monthlyChart = {
+  //   series: [
+  //     {
+  //       name: "Revenue",
+  //       data: [financial.monthlyRevenue || 0],
+  //     },
+  //     {
+  //       name: "Expenses",
+  //       data: [financial.monthlyExpenses || 0],
+  //     },
+  //   ],
+  //   options: {
+  //     chart: {
+  //       type: "bar",
+  //       height: 350,
+  //       toolbar: { show: false },
+  //     },
+  //     plotOptions: {
+  //       bar: {
+  //         horizontal: false,
+  //         columnWidth: "55%",
+  //       },
+  //     },
+  //     dataLabels: {
+  //       enabled: false,
+  //     },
+  //     stroke: {
+  //       show: true,
+  //       width: 2,
+  //       colors: ["transparent"],
+  //     },
+  //     xaxis: {
+  //       categories: ["This Month"],
+  //     },
+  //     yaxis: {
+  //       title: {
+  //         text: "Amount ($)",
+  //       },
+  //     },
+  //     fill: {
+  //       opacity: 1,
+  //     },
+  //     colors: ["#10b981", "#ef4444"],
+  //     tooltip: {
+  //       y: {
+  //         formatter: (val: number) => formatCurrency(val),
+  //       },
+  //     },
+  //   },
+  // };
 
-  // Chart data for Party Distribution
-  const partyDistributionChart = {
-    series: [
-      parties.totalCustomers || 0,
-      parties.totalSuppliers || 0,
-      parties.totalEmployees || 0,
-    ],
-    options: {
-      chart: {
-        type: "pie",
-        height: 350,
-      },
-      labels: ["Customers", "Suppliers", "Employees"],
-      colors: ["#3b82f6", "#f59e0b", "#8b5cf6"],
-      legend: {
-        position: "bottom",
-      },
-      tooltip: {
-        y: {
-          formatter: (val: number) => formatNumber(val),
-        },
-      },
-    },
-  };
+  // // Chart data for Party Distribution
+  // const partyDistributionChart = {
+  //   series: [
+  //     parties.totalCustomers || 0,
+  //     parties.totalSuppliers || 0,
+  //     parties.totalEmployees || 0,
+  //   ],
+  //   options: {
+  //     chart: {
+  //       type: "pie",
+  //       height: 350,
+  //     },
+  //     labels: ["Customers", "Suppliers", "Employees"],
+  //     colors: ["#3b82f6", "#f59e0b", "#8b5cf6"],
+  //     legend: {
+  //       position: "bottom",
+  //     },
+  //     tooltip: {
+  //       y: {
+  //         formatter: (val: number) => formatNumber(val),
+  //       },
+  //     },
+  //   },
+  // };
 
-  const statsCards = [
-    // Document Statistics
-    {
-      title: "Total Documents",
-      value: formatNumber(documents.total || 0),
-      icon: FileText,
-      color: "bg-blue-500",
-      change: null,
-    },
-    {
-      title: "Documents Today",
-      value: formatNumber(documents.today || 0),
-      icon: Activity,
-      color: "bg-green-500",
-      change: null,
-    },
-    {
-      title: "Documents This Month",
-      value: formatNumber(documents.thisMonth || 0),
-      icon: Calendar,
-      color: "bg-purple-500",
-      change: null,
-    },
-    {
-      title: "Total Revenue (Documents)",
-      value: formatCurrency(documents.totalRevenue || 0),
-      icon: DollarSign,
-      color: "bg-emerald-500",
-      change: null,
-    },
-    {
-      title: "Total Paid",
-      value: formatCurrency(documents.totalPaid || 0),
-      icon: CreditCard,
-      color: "bg-teal-500",
-      change: null,
-    },
-    {
-      title: "Outstanding Balance",
-      value: formatCurrency(documents.outstandingBalance || 0),
-      icon: Receipt,
-      color: "bg-orange-500",
-      change: null,
-    },
-    // Party Statistics
-    {
-      title: "Total Customers",
-      value: formatNumber(parties.totalCustomers || 0),
-      icon: Users,
-      color: "bg-indigo-500",
-      change: null,
-    },
-    {
-      title: "Total Suppliers",
-      value: formatNumber(parties.totalSuppliers || 0),
-      icon: Building2,
-      color: "bg-amber-500",
-      change: null,
-    },
-    {
-      title: "Total Employees",
-      value: formatNumber(parties.totalEmployees || 0),
-      icon: Users,
-      color: "bg-violet-500",
-      change: null,
-    },
-    {
-      title: "Accounts Receivable",
-      value: formatCurrency(parties.accountsReceivable || 0),
-      icon: TrendingUp,
-      color: "bg-green-600",
-      change: null,
-    },
-    {
-      title: "Accounts Payable",
-      value: formatCurrency(parties.accountsPayable || 0),
-      icon: TrendingDown,
-      color: "bg-red-600",
-      change: null,
-    },
-    // Accounting Statistics
-    {
-      title: "Total Assets",
-      value: formatCurrency(accounting.totalAssets || 0),
-      icon: Wallet,
-      color: "bg-blue-600",
-      change: null,
-    },
-    {
-      title: "Total Liabilities",
-      value: formatCurrency(accounting.totalLiabilities || 0),
-      icon: Receipt,
-      color: "bg-red-500",
-      change: null,
-    },
-    {
-      title: "Total Equity",
-      value: formatCurrency(accounting.totalEquity || 0),
-      icon: Building2,
-      color: "bg-green-600",
-      change: null,
-    },
-    {
-      title: "Total Revenue (Accounting)",
-      value: formatCurrency(accounting.totalRevenue || 0),
-      icon: TrendingUp,
-      color: "bg-emerald-600",
-      change: null,
-    },
-    {
-      title: "Total Expenses",
-      value: formatCurrency(accounting.totalExpenses || 0),
-      icon: TrendingDown,
-      color: "bg-rose-600",
-      change: null,
-    },
-    {
-      title: "Net Income",
-      value: formatCurrency(accounting.netIncome || 0),
-      icon: Calculator,
-      color: accounting.netIncome >= 0 ? "bg-green-600" : "bg-red-600",
-      change: null,
-    },
-    {
-      title: "Active Accounts",
-      value: formatNumber(accounting.activeAccounts || 0),
-      icon: FileText,
-      color: "bg-cyan-500",
-      change: null,
-    },
-    {
-      title: "Journal Entries Today",
-      value: formatNumber(accounting.journalEntriesToday || 0),
-      icon: Activity,
-      color: "bg-pink-500",
-      change: null,
-    },
-    // Financial Overview
-    {
-      title: "Cash Balance",
-      value: formatCurrency(financial.cashBalance || 0),
-      icon: Wallet,
-      color: "bg-green-500",
-      change: null,
-    },
-    {
-      title: "Monthly Revenue",
-      value: formatCurrency(financial.monthlyRevenue || 0),
-      icon: TrendingUp,
-      color: "bg-emerald-500",
-      change: null,
-    },
-    {
-      title: "Monthly Expenses",
-      value: formatCurrency(financial.monthlyExpenses || 0),
-      icon: TrendingDown,
-      color: "bg-red-500",
-      change: null,
-    },
-  ];
+  // const statsCards = [
+  //   // Document Statistics
+  //   {
+  //     title: "Total Documents",
+  //     value: formatNumber(documents.total || 0),
+  //     icon: FileText,
+  //     color: "bg-blue-500",
+  //     change: null,
+  //   },
+  //   {
+  //     title: "Documents Today",
+  //     value: formatNumber(documents.today || 0),
+  //     icon: Activity,
+  //     color: "bg-green-500",
+  //     change: null,
+  //   },
+  //   {
+  //     title: "Documents This Month",
+  //     value: formatNumber(documents.thisMonth || 0),
+  //     icon: Calendar,
+  //     color: "bg-purple-500",
+  //     change: null,
+  //   },
+  //   {
+  //     title: "Total Revenue (Documents)",
+  //     value: formatCurrency(documents.totalRevenue || 0),
+  //     icon: DollarSign,
+  //     color: "bg-emerald-500",
+  //     change: null,
+  //   },
+  //   {
+  //     title: "Total Paid",
+  //     value: formatCurrency(documents.totalPaid || 0),
+  //     icon: CreditCard,
+  //     color: "bg-teal-500",
+  //     change: null,
+  //   },
+  //   {
+  //     title: "Outstanding Balance",
+  //     value: formatCurrency(documents.outstandingBalance || 0),
+  //     icon: Receipt,
+  //     color: "bg-orange-500",
+  //     change: null,
+  //   },
+  //   // Party Statistics
+  //   {
+  //     title: "Total Customers",
+  //     value: formatNumber(parties.totalCustomers || 0),
+  //     icon: Users,
+  //     color: "bg-indigo-500",
+  //     change: null,
+  //   },
+  //   {
+  //     title: "Total Suppliers",
+  //     value: formatNumber(parties.totalSuppliers || 0),
+  //     icon: Building2,
+  //     color: "bg-amber-500",
+  //     change: null,
+  //   },
+  //   {
+  //     title: "Total Employees",
+  //     value: formatNumber(parties.totalEmployees || 0),
+  //     icon: Users,
+  //     color: "bg-violet-500",
+  //     change: null,
+  //   },
+  //   {
+  //     title: "Accounts Receivable",
+  //     value: formatCurrency(parties.accountsReceivable || 0),
+  //     icon: TrendingUp,
+  //     color: "bg-green-600",
+  //     change: null,
+  //   },
+  //   {
+  //     title: "Accounts Payable",
+  //     value: formatCurrency(parties.accountsPayable || 0),
+  //     icon: TrendingDown,
+  //     color: "bg-red-600",
+  //     change: null,
+  //   },
+  //   // Accounting Statistics
+  //   {
+  //     title: "Total Assets",
+  //     value: formatCurrency(accounting.totalAssets || 0),
+  //     icon: Wallet,
+  //     color: "bg-blue-600",
+  //     change: null,
+  //   },
+  //   {
+  //     title: "Total Liabilities",
+  //     value: formatCurrency(accounting.totalLiabilities || 0),
+  //     icon: Receipt,
+  //     color: "bg-red-500",
+  //     change: null,
+  //   },
+  //   {
+  //     title: "Total Equity",
+  //     value: formatCurrency(accounting.totalEquity || 0),
+  //     icon: Building2,
+  //     color: "bg-green-600",
+  //     change: null,
+  //   },
+  //   {
+  //     title: "Total Revenue (Accounting)",
+  //     value: formatCurrency(accounting.totalRevenue || 0),
+  //     icon: TrendingUp,
+  //     color: "bg-emerald-600",
+  //     change: null,
+  //   },
+  //   {
+  //     title: "Total Expenses",
+  //     value: formatCurrency(accounting.totalExpenses || 0),
+  //     icon: TrendingDown,
+  //     color: "bg-rose-600",
+  //     change: null,
+  //   },
+  //   {
+  //     title: "Net Income",
+  //     value: formatCurrency(accounting.netIncome || 0),
+  //     icon: Calculator,
+  //     color: accounting.netIncome >= 0 ? "bg-green-600" : "bg-red-600",
+  //     change: null,
+  //   },
+  //   {
+  //     title: "Active Accounts",
+  //     value: formatNumber(accounting.activeAccounts || 0),
+  //     icon: FileText,
+  //     color: "bg-cyan-500",
+  //     change: null,
+  //   },
+  //   {
+  //     title: "Journal Entries Today",
+  //     value: formatNumber(accounting.journalEntriesToday || 0),
+  //     icon: Activity,
+  //     color: "bg-pink-500",
+  //     change: null,
+  //   },
+  //   // Financial Overview
+  //   {
+  //     title: "Cash Balance",
+  //     value: formatCurrency(financial.cashBalance || 0),
+  //     icon: Wallet,
+  //     color: "bg-green-500",
+  //     change: null,
+  //   },
+  //   {
+  //     title: "Monthly Revenue",
+  //     value: formatCurrency(financial.monthlyRevenue || 0),
+  //     icon: TrendingUp,
+  //     color: "bg-emerald-500",
+  //     change: null,
+  //   },
+  //   {
+  //     title: "Monthly Expenses",
+  //     value: formatCurrency(financial.monthlyExpenses || 0),
+  //     icon: TrendingDown,
+  //     color: "bg-red-500",
+  //     change: null,
+  //   },
+  // ];
 
   return (
     <div className="space-y-6">
