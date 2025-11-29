@@ -1,33 +1,33 @@
-import React from "react";
-import {
-  FileText,
-  DollarSign,
-  Users,
-  TrendingUp,
-  TrendingDown,
-  CreditCard,
-  Wallet,
-  Building2,
-  Receipt,
-  Calculator,
-  Activity,
-  Calendar,
-} from "lucide-react";
-import { useApi } from "../../hooks";
-import { dashboardApi } from "../../services/api";
-import Chart from "react-apexcharts";
+// import React from "react";
+// import {
+//   FileText,
+//   DollarSign,
+//   Users,
+//   TrendingUp,
+//   TrendingDown,
+//   CreditCard,
+//   Wallet,
+//   Building2,
+//   Receipt,
+//   Calculator,
+//   Activity,
+//   Calendar,
+// } from "lucide-react";
+// import { useApi } from "../../hooks";
+// import { dashboardApi } from "../../services/api";
+// import Chart from "react-apexcharts";
 
-const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
-  }).format(value);
-};
+// const formatCurrency = (value: number) => {
+//   return new Intl.NumberFormat("en-US", {
+//     style: "currency",
+//     currency: "USD",
+//     minimumFractionDigits: 2,
+//   }).format(value);
+// };
 
-const formatNumber = (value: number) => {
-  return new Intl.NumberFormat("en-US").format(value);
-};
+// const formatNumber = (value: number) => {
+//   return new Intl.NumberFormat("en-US").format(value);
+// };
 
 export default function Home() {
   // const { data: stats, loading } = useApi(() => dashboardApi.getStats());
