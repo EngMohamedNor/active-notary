@@ -1250,4 +1250,268 @@ router.post(
   }
 );
 
+// Get Balance Sheet
+router.get(
+  "/balance-sheet",
+  authenticateToken,
+  async (req: Request, res: Response) => {
+    try {
+      const { asOfDate } = req.query;
+      const date = asOfDate ? new Date(asOfDate as string) : new Date();
+
+      // Get all accounts with balances
+      const accounts = await ChartOfAccount.findAll({
+        where: { is_active: true },
+        order: [["account_code", "ASC"]],
+      });
+
+      // Get trial balance
+      const trialBalance = await JournalService.getTrialBalance(date);
+
+      // Create balance map
+      const balanceMap = new Map<string, number>();
+      trialBalance.forEach((item) => {
+        balanceMap.set(item.accountCode, item.balance);
+      });
+
+      // Build account tree with balances
+      const accountTree: any[] = [];
+      const accountMap = new Map<string, any>();
+
+      accounts.forEach((account: any) => {
+        const balance = balanceMap.get(account.account_code) || 0;
+        const accountData = {
+          id: account.id,
+          accountCode: account.account_code,
+          accountName: account.account_name,
+          category: account.category,
+          parentId: account.parent_id,
+          balance: balance,
+          children: [],
+        };
+        accountMap.set(account.id, accountData);
+      });
+
+      // Build tree structure - first pass: add accounts without parents
+      accountMap.forEach((account) => {
+        if (!account.parentId) {
+          accountTree.push(account);
+        }
+      });
+
+      // Second pass: add children to their parents
+      accountMap.forEach((account) => {
+        if (account.parentId) {
+          const parent = accountMap.get(account.parentId);
+          if (parent) {
+            parent.children.push(account);
+          }
+        }
+      });
+
+      // Sort children by account code
+      const sortAccounts = (accounts: any[]) => {
+        accounts.sort((a, b) => a.accountCode.localeCompare(b.accountCode));
+        accounts.forEach((acc) => {
+          if (acc.children.length > 0) {
+            sortAccounts(acc.children);
+          }
+        });
+      };
+      sortAccounts(accountTree);
+
+      // Calculate totals for each category
+      const calculateCategoryTotal = (
+        accounts: any[],
+        category: string
+      ): number => {
+        let total = 0;
+        accounts.forEach((acc) => {
+          if (acc.category === category) {
+            const accountTotal = calculateAccountTotal(acc);
+            total += accountTotal;
+          }
+        });
+        return total;
+      };
+
+      const calculateAccountTotal = (account: any): number => {
+        let total = Math.abs(account.balance);
+        if (account.children && account.children.length > 0) {
+          account.children.forEach((child: any) => {
+            total += calculateAccountTotal(child);
+          });
+        }
+        return total;
+      };
+
+      // Filter by category
+      const assets = accountTree.filter((acc) => acc.category === "asset");
+      const liabilities = accountTree.filter(
+        (acc) => acc.category === "liability"
+      );
+      const equity = accountTree.filter((acc) => acc.category === "equity");
+
+      // Calculate totals
+      const totalAssets = calculateCategoryTotal(accountTree, "asset");
+      const totalLiabilities = calculateCategoryTotal(accountTree, "liability");
+      const totalEquityBase = calculateCategoryTotal(accountTree, "equity");
+
+      // Get revenue and expenses for net income
+      const revenue = accountTree.filter((acc) => acc.category === "revenue");
+      const expenses = accountTree.filter((acc) => acc.category === "expense");
+      const totalRevenue = calculateCategoryTotal(accountTree, "revenue");
+      const totalExpenses = calculateCategoryTotal(accountTree, "expense");
+      const netIncome = totalRevenue - totalExpenses;
+      const totalEquity = totalEquityBase + netIncome;
+
+      res.json({
+        asOfDate: date,
+        assets: {
+          accounts: assets,
+          total: totalAssets,
+        },
+        liabilities: {
+          accounts: liabilities,
+          total: totalLiabilities,
+        },
+        equity: {
+          accounts: equity,
+          total: totalEquity,
+          netIncome: netIncome,
+        },
+        totalLiabilitiesAndEquity: totalLiabilities + totalEquity,
+      });
+    } catch (error) {
+      console.error("Error getting balance sheet:", error);
+      res.status(500).json({
+        error: "Failed to get balance sheet",
+        details: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  }
+);
+
+// Get Income Statement
+router.get(
+  "/income-statement",
+  authenticateToken,
+  async (req: Request, res: Response) => {
+    try {
+      const { startDate, endDate } = req.query;
+      const start = startDate
+        ? new Date(startDate as string)
+        : new Date(new Date().getFullYear(), 0, 1);
+      const end = endDate ? new Date(endDate as string) : new Date();
+
+      // Get all accounts with balances
+      const accounts = await ChartOfAccount.findAll({
+        where: { is_active: true },
+        order: [["account_code", "ASC"]],
+      });
+
+      // Get trial balance up to end date
+      const trialBalance = await JournalService.getTrialBalance(end);
+
+      // Create balance map
+      const balanceMap = new Map<string, number>();
+      trialBalance.forEach((item) => {
+        balanceMap.set(item.accountCode, item.balance);
+      });
+
+      // Build account tree with balances
+      const accountTree: any[] = [];
+      const accountMap = new Map<string, any>();
+
+      accounts.forEach((account: any) => {
+        const balance = balanceMap.get(account.account_code) || 0;
+        const accountData = {
+          id: account.id,
+          accountCode: account.account_code,
+          accountName: account.account_name,
+          category: account.category,
+          parentId: account.parent_id,
+          balance: balance,
+          children: [],
+        };
+        accountMap.set(account.id, accountData);
+      });
+
+      // Build tree structure - first pass: add accounts without parents
+      accountMap.forEach((account) => {
+        if (!account.parentId) {
+          accountTree.push(account);
+        }
+      });
+
+      // Second pass: add children to their parents
+      accountMap.forEach((account) => {
+        if (account.parentId) {
+          const parent = accountMap.get(account.parentId);
+          if (parent) {
+            parent.children.push(account);
+          }
+        }
+      });
+
+      // Sort children by account code
+      const sortAccounts = (accounts: any[]) => {
+        accounts.sort((a, b) => a.accountCode.localeCompare(b.accountCode));
+        accounts.forEach((acc) => {
+          if (acc.children.length > 0) {
+            sortAccounts(acc.children);
+          }
+        });
+      };
+      sortAccounts(accountTree);
+
+      // Calculate totals
+      const calculateAccountTotal = (account: any): number => {
+        let total = Math.abs(account.balance);
+        if (account.children && account.children.length > 0) {
+          account.children.forEach((child: any) => {
+            total += calculateAccountTotal(child);
+          });
+        }
+        return total;
+      };
+
+      // Filter by category
+      const revenue = accountTree.filter((acc) => acc.category === "revenue");
+      const expenses = accountTree.filter((acc) => acc.category === "expense");
+
+      // Calculate totals
+      const totalRevenue = revenue.reduce(
+        (sum, acc) => sum + calculateAccountTotal(acc),
+        0
+      );
+      const totalExpenses = expenses.reduce(
+        (sum, acc) => sum + calculateAccountTotal(acc),
+        0
+      );
+      const netIncome = totalRevenue - totalExpenses;
+
+      res.json({
+        startDate: start,
+        endDate: end,
+        revenue: {
+          accounts: revenue,
+          total: totalRevenue,
+        },
+        expenses: {
+          accounts: expenses,
+          total: totalExpenses,
+        },
+        netIncome: netIncome,
+      });
+    } catch (error) {
+      console.error("Error getting income statement:", error);
+      res.status(500).json({
+        error: "Failed to get income statement",
+        details: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  }
+);
+
 export default router;

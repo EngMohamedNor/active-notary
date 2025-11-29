@@ -23,6 +23,10 @@ import Expense from "./pages/Accounting/Expense";
 import PartiesList from "./pages/Parties/PartiesList";
 import PartyStatement from "./pages/Parties/PartyStatement";
 
+// Reports
+import BalanceSheet from "./pages/Reports/BalanceSheet";
+import IncomeStatement from "./pages/Reports/IncomeStatement";
+
 export default function App() {
   return (
     <AuthProvider>
@@ -76,6 +80,13 @@ export default function App() {
             <Route
               path="/parties/:id/statement"
               element={<PartyStatement />}
+            />
+
+            {/* Reports */}
+            <Route path="/reports/balance-sheet" element={<BalanceSheet />} />
+            <Route
+              path="/reports/income-statement"
+              element={<IncomeStatement />}
             />
           </Route>
         </Routes>

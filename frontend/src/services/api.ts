@@ -198,6 +198,24 @@ export const accountingApi = {
       body: JSON.stringify(data),
     });
   },
+
+  getBalanceSheet: async (params?: { asOfDate?: string }) => {
+    const queryParams = new URLSearchParams();
+    if (params?.asOfDate) queryParams.append("asOfDate", params.asOfDate);
+    const query = queryParams.toString();
+    return apiCall(`/accounting/balance-sheet${query ? `?${query}` : ""}`);
+  },
+
+  getIncomeStatement: async (params?: {
+    startDate?: string;
+    endDate?: string;
+  }) => {
+    const queryParams = new URLSearchParams();
+    if (params?.startDate) queryParams.append("startDate", params.startDate);
+    if (params?.endDate) queryParams.append("endDate", params.endDate);
+    const query = queryParams.toString();
+    return apiCall(`/accounting/income-statement${query ? `?${query}` : ""}`);
+  },
 };
 
 // Dashboard API

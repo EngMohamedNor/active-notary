@@ -68,6 +68,14 @@ const navItems: NavItem[] = [
       { name: "Employees", path: "/parties/employees" },
     ],
   },
+  {
+    icon: <FileText className="w-5 h-5" />,
+    name: "Reports",
+    subItems: [
+      { name: "Balance Sheet", path: "/reports/balance-sheet" },
+      { name: "Income Statement", path: "/reports/income-statement" },
+    ],
+  },
 ];
 
 const AppSidebar: React.FC = () => {
