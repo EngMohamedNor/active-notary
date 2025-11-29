@@ -55,6 +55,7 @@ const navItems: NavItem[] = [
       { name: "Journal Entries", path: "/accounting/journal-entries" },
       { name: "Trial Balance", path: "/accounting/trial-balance" },
       { name: "Ledger Entry", path: "/accounting/ledger-entry" },
+      { name: "Expense", path: "/accounting/expense" },
     ],
   },
   {

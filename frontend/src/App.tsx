@@ -17,6 +17,7 @@ import TrialBalance from "./pages/Accounting/TrialBalance";
 import JournalEntries from "./pages/Accounting/JournalEntries";
 import ChartOfAccounts from "./pages/Accounting/ChartOfAccounts";
 import LedgerEntry from "./pages/Accounting/LedgerEntry";
+import Expense from "./pages/Accounting/Expense";
 
 // Parties
 import PartiesList from "./pages/Parties/PartiesList";
@@ -65,6 +66,7 @@ export default function App() {
               path="/accounting/chart-of-accounts"
               element={<ChartOfAccounts />}
             />
+            <Route path="/accounting/expense" element={<Expense />} />
 
             {/* Parties */}
             <Route path="/parties" element={<PartiesList />} />

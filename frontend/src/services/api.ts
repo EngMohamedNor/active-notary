@@ -178,6 +178,26 @@ export const accountingApi = {
       method: "DELETE",
     });
   },
+
+  getCashAccounts: async () => {
+    return apiCall("/accounting/cash-accounts");
+  },
+
+  createExpense: async (data: {
+    expenseAccountCode: string;
+    amount: number;
+    refNo?: string;
+    description: string;
+    transactionDate: string;
+    paymentAccountCode?: string;
+    supplierId?: string;
+    isPaid: boolean;
+  }) => {
+    return apiCall("/accounting/expenses", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
 };
 
 // Party API

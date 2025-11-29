@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 import { Op, Transaction } from "sequelize";
-import { JournalService } from "../services/JournalService.js";
+import { JournalService, JournalEntry } from "../services/JournalService.js";
 import {
   GeneralJournal,
   JournalLine,
@@ -1005,6 +1005,245 @@ router.get(
       console.error("Error getting cash accounts:", error);
       res.status(500).json({
         error: "Failed to get cash accounts",
+        details: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  }
+);
+
+// Create expense entry
+router.post(
+  "/expenses",
+  authenticateToken,
+  async (req: Request, res: Response) => {
+    const transaction: Transaction = await sequelize.transaction();
+
+    try {
+      const {
+        expenseAccountCode,
+        amount,
+        refNo,
+        description,
+        transactionDate,
+        paymentAccountCode,
+        supplierId,
+        isPaid,
+      } = req.body;
+
+      // Validate required fields
+      if (!expenseAccountCode || !amount || !description || !transactionDate) {
+        await transaction.rollback();
+        res.status(400).json({
+          error:
+            "Missing required fields: expenseAccountCode, amount, description, transactionDate",
+        });
+        return;
+      }
+
+      const expenseAmount = parseFloat(amount);
+      if (isNaN(expenseAmount) || expenseAmount <= 0) {
+        await transaction.rollback();
+        res.status(400).json({
+          error: "Amount must be a positive number",
+        });
+        return;
+      }
+
+      // Validate payment status
+      const paid = isPaid === true || isPaid === "true";
+      if (paid && !paymentAccountCode) {
+        await transaction.rollback();
+        res.status(400).json({
+          error: "Payment account is required for paid expenses",
+        });
+        return;
+      }
+
+      if (!paid && !supplierId) {
+        await transaction.rollback();
+        res.status(400).json({
+          error: "Supplier is required for unpaid expenses",
+        });
+        return;
+      }
+
+      // Get expense account
+      const expenseAccount = await ChartOfAccount.findOne({
+        where: { account_code: expenseAccountCode, is_active: true },
+        transaction,
+      });
+
+      if (!expenseAccount) {
+        await transaction.rollback();
+        res.status(404).json({
+          error: `Expense account ${expenseAccountCode} not found or inactive`,
+        });
+        return;
+      }
+
+      // Verify it's an expense account
+      if (expenseAccount.category !== "expense") {
+        await transaction.rollback();
+        res.status(400).json({
+          error: `Account ${expenseAccountCode} is not an expense account`,
+        });
+        return;
+      }
+
+      let paymentAccount = null;
+      let accountsPayableAccount = null;
+
+      if (paid) {
+        // Get payment account and check balance
+        paymentAccount = await ChartOfAccount.findOne({
+          where: { account_code: paymentAccountCode, is_active: true },
+          transaction,
+        });
+
+        if (!paymentAccount) {
+          await transaction.rollback();
+          res.status(404).json({
+            error: `Payment account ${paymentAccountCode} not found or inactive`,
+          });
+          return;
+        }
+
+        // Check balance sufficiency
+        const balance = await JournalService.getAccountBalance(
+          paymentAccountCode,
+          new Date(transactionDate)
+        );
+
+        if (balance.balance < expenseAmount) {
+          await transaction.rollback();
+          res.status(400).json({
+            error: `Insufficient balance in payment account. Available: ${balance.balance.toFixed(
+              2
+            )}, Required: ${expenseAmount.toFixed(2)}`,
+          });
+          return;
+        }
+      } else {
+        // Get accounts payable account (typically 2000)
+        accountsPayableAccount = await ChartOfAccount.findOne({
+          where: { account_code: "2000", is_active: true },
+          transaction,
+        });
+
+        if (!accountsPayableAccount) {
+          // Try to find any accounts payable account
+          accountsPayableAccount = await ChartOfAccount.findOne({
+            where: {
+              category: "liability",
+              account_name: { [Op.like]: "%Payable%" },
+              is_active: true,
+            },
+            transaction,
+            order: [["account_code", "ASC"]],
+          });
+
+          if (!accountsPayableAccount) {
+            await transaction.rollback();
+            res.status(404).json({
+              error:
+                "Accounts payable account not found. Please create an accounts payable account first.",
+            });
+            return;
+          }
+        }
+      }
+
+      // Create journal entry
+      const journal = await GeneralJournal.create(
+        {
+          date: new Date(transactionDate),
+          description: description,
+          reference_id: refNo || null,
+        },
+        { transaction }
+      );
+
+      // Create journal lines based on payment status
+      const journalEntries: JournalEntry[] = [
+        {
+          accountCode: expenseAccountCode,
+          debit: expenseAmount,
+          credit: 0,
+          description: description,
+        },
+      ];
+
+      if (paid) {
+        // Paid: Credit payment account
+        journalEntries.push({
+          accountCode: paymentAccount!.account_code,
+          debit: 0,
+          credit: expenseAmount,
+          description: `Payment for ${description}`,
+          partyId: null,
+        });
+      } else {
+        // Unpaid: Credit accounts payable with party_id
+        journalEntries.push({
+          accountCode: accountsPayableAccount!.account_code,
+          debit: 0,
+          credit: expenseAmount,
+          description: `Accounts payable for ${description}`,
+          partyId: supplierId,
+        });
+      }
+
+      await JournalService.createJournalLines(
+        journal.id,
+        journalEntries,
+        transaction
+      );
+
+      await transaction.commit();
+
+      // Return created journal entry
+      const createdJournal = await GeneralJournal.findByPk(journal.id, {
+        include: [
+          {
+            model: JournalLine,
+            as: "journal_lines",
+            include: [
+              {
+                model: ChartOfAccount,
+                as: "account",
+                attributes: ["account_code", "account_name", "category"],
+              },
+            ],
+          },
+        ],
+      });
+
+      res.status(201).json({
+        message: "Expense created successfully",
+        journal: {
+          id: createdJournal!.id,
+          date: createdJournal!.date,
+          description: createdJournal!.description,
+          referenceId: createdJournal!.reference_id,
+          createdAt: createdJournal!.created_at,
+          lines:
+            (createdJournal as any)!.journal_lines?.map((line: any) => ({
+              id: line.id,
+              accountCode: line.account_code,
+              accountName: line.account?.account_name,
+              accountCategory: line.account?.category,
+              debit: line.debit,
+              credit: line.credit,
+              description: line.description,
+              partyId: line.party_id,
+            })) || [],
+        },
+      });
+    } catch (error) {
+      await transaction.rollback();
+      console.error("Error creating expense:", error);
+      res.status(500).json({
+        error: "Failed to create expense",
         details: error instanceof Error ? error.message : "Unknown error",
       });
     }
